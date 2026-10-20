@@ -162,7 +162,9 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 html.rails{--rail:112px;--fs:min(17px, calc((100vw - 2 * var(--rail) - 24px) / 39.5))}
 /* app shell (iPad, and side toolbars): nothing on screen moves, only the script scrolls */
 html.shell{padding:0;height:100%;overflow:hidden}
-html.shell body{position:fixed;left:0;right:0;top:var(--vvt, 0px);height:var(--vvh, 100%);overflow:hidden;margin:0}
+html.shell body{position:fixed;left:0;right:0;top:0;bottom:0;overflow:hidden;margin:0}
+/* while the keyboard is up, fit the app into the space above it */
+html.shell.kb body{top:var(--vvt, 0px);bottom:auto;height:var(--vvh, 100%)}
 html.shell header{position:absolute;top:0;left:0;right:0}
 html.shell main{position:absolute;top:0;bottom:0;left:0;right:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   padding:calc(var(--hdr, 0px) + 16px) 10px 0}
@@ -2384,6 +2386,9 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       const kb = vv && vv.height < window.innerHeight - 120;
       root.setProperty('--vvh', (vv ? vv.height : window.innerHeight) + 'px');
       root.setProperty('--vvt', (kb ? Math.max(0, vv.offsetTop) : 0) + 'px');
+      // with the keyboard down, stretch to the screen edges (on the Home Screen the
+      // reported height can come up short, which left a grey strip at the bottom)
+      document.documentElement.classList.toggle('kb', !!kb);
       if (!kb && window.scrollY) window.scrollTo(0, 0);
       hdr.style.transform = '';
     } else {
