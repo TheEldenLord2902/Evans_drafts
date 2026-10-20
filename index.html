@@ -7,6 +7,7 @@
 <title>Script Editor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.__gisLoaded && window.__gisLoaded()"></script>
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -70,6 +71,20 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 @media (max-width:760px){#hint{display:none}}
 @media (max-width:520px){#status{display:none}}
 
+[hidden]{display:none !important}
+.textbtn.primary{background:var(--on);color:var(--on-ink);border-color:transparent}
+.notice{flex-wrap:wrap;background:var(--pill);border-radius:12px;padding:8px 8px 8px 14px;font-size:14px}
+.notice span{flex:1;min-width:200px}
+.overlay{position:fixed;inset:0;z-index:40;background:rgba(10,12,15,.45);display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top, 0px) + 64px) 16px 16px}
+.sheet{background:var(--page);color:var(--ink);width:100%;max-width:520px;max-height:70vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:10px 10px 10px 18px;border-bottom:1px solid var(--line)}
+.sheet-head h2{margin:0;font:600 17px var(--ui)}
+.list{overflow:auto;padding:6px}
+.item{display:flex;align-items:baseline;justify-content:space-between;gap:12px;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);padding:13px 12px;border-radius:10px;font-size:16px}
+.item:hover,.item:active{background:var(--pill)}
+.item.current span{font-weight:600}
+.item small{color:var(--muted);font-size:13px;white-space:nowrap}
+.empty{padding:18px;color:var(--muted);font-size:15px;line-height:1.4;margin:0}
 main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px 0}
 .page{
   position:relative;font-size:var(--fs);font-family:var(--mono);
@@ -115,7 +130,14 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     <button class="icon" id="redo" aria-label="Redo" title="Redo">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
     </button>
+    <button class="textbtn" id="open" hidden>Open</button>
     <button class="textbtn" id="new">New</button>
+    <button class="textbtn primary" id="drive">Connect Drive</button>
+  </div>
+  <div class="row notice" id="conflict" hidden>
+    <span>This script was changed on another device.</span>
+    <button class="textbtn" id="useDrive">Use Drive version</button>
+    <button class="textbtn" id="keepMine">Keep this version</button>
   </div>
   <div class="row">
     <div class="types" role="toolbar" aria-label="Line type">
@@ -135,6 +157,16 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     <div id="editor" class="editor" contenteditable="true" spellcheck="true" autocapitalize="sentences" autocorrect="on" role="textbox" aria-multiline="true" aria-label="Screenplay"></div>
   </div>
 </main>
+
+<div class="overlay" id="picker" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
+    <div class="sheet-head">
+      <h2 id="pickerTitle">Your scripts in Drive</h2>
+      <button class="textbtn" id="closePicker">Close</button>
+    </div>
+    <div class="list" id="pickerList"></div>
+  </div>
+</div>
 
 <script>
 (() => {
@@ -410,14 +442,24 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   }
 
   /* ---------- saving on this device ---------- */
-  let saveTimer = null;
+  let saveTimer = null, changeSeq = 0;
+  let doc = {fileId:null, version:null, dirty:false};
   const setStatus = s => { statusEl.textContent = s; };
-  function scheduleSave() { setStatus('Saving…'); clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 500); }
-  function saveNow() {
+  const currentData = () => ({app:'script-editor', v:1, title:titleEl.value,
+    blocks:blocks().map(b => [b.dataset.type, txt(b), b.dataset.manual ? 1 : 0])});
+  const hasContent = d => !!(d.title.trim() || d.blocks.some(b => b[1].trim()));
+  function scheduleSave() {
+    doc.dirty = true; changeSeq++;
+    setStatus(driveState === 'on' ? 'Saving to Drive…' : 'Saving…');
+    clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, 500);
+    scheduleDrive();
+  }
+  function saveLocal() {
     clearTimeout(saveTimer);
-    const data = {v:1, title:titleEl.value, blocks:blocks().map(b => [b.dataset.type, txt(b), b.dataset.manual ? 1 : 0]), savedAt:Date.now()};
-    try { localStorage.setItem(KEY, JSON.stringify(data)); setStatus('Saved on this device'); }
-    catch (e) { setStatus('Not saved: this browser blocks storage'); }
+    const d = currentData();
+    const data = {v:1, title:d.title, blocks:d.blocks, doc, savedAt:Date.now()};
+    try { localStorage.setItem(KEY, JSON.stringify(data)); if (driveState !== 'on') setStatus('Saved on this device'); }
+    catch (e) { if (driveState !== 'on') setStatus('Not saved: this browser blocks storage'); }
   }
   function load() {
     try {
@@ -425,6 +467,266 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       return d && Array.isArray(d.blocks) && d.blocks.length ? d : null;
     } catch (e) { return null; }
   }
+  function resetHistory() { hist = []; hi = -1; commitNow(); updateUndo(); }
+
+  /* ---------- Google Drive ---------- */
+  const CLIENT_ID = '623460977517-igdubvm1vcao7uqj4mcju3duvuvt9tp8.apps.googleusercontent.com';
+  const SCOPE = 'https://www.googleapis.com/auth/drive.file';
+  const API = 'https://www.googleapis.com/drive/v3';
+  const UP = 'https://www.googleapis.com/upload/drive/v3';
+  const TOKEN_KEY = 'script-editor:token';
+  const CONN_KEY = 'script-editor:connected';
+  const NEED_AUTH = {needAuth:true};
+  const driveBtn = document.getElementById('drive');
+  const openBtn = document.getElementById('open');
+  const conflictRow = document.getElementById('conflict');
+  const picker = document.getElementById('picker');
+  const pickerList = document.getElementById('pickerList');
+
+  let token = null, tokenExp = 0, tokenClient = null, onToken = null, onTokenErr = null;
+  let driveState = 'off';           // off | on | reconnect
+  let driveTimer = null, saving = false, saveAgain = false;
+  let conflict = false, conflictMeta = null, folderCache = null, lastCheck = 0;
+
+  const wasConnected = () => { try { return localStorage.getItem(CONN_KEY) === '1'; } catch (e) { return false; } };
+  const tokenValid = () => !!token && Date.now() < tokenExp - 60000;
+  try {
+    const t = JSON.parse(sessionStorage.getItem(TOKEN_KEY) || 'null');
+    if (t && t.t && Date.now() < t.exp - 60000) { token = t.t; tokenExp = t.exp; }
+  } catch (e) {}
+
+  function initGis() {
+    if (tokenClient || !(window.google && google.accounts && google.accounts.oauth2)) return;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID, scope: SCOPE,
+      callback: r => onToken && onToken(r),
+      error_callback: e => onTokenErr && onTokenErr(e)
+    });
+  }
+  window.__gisLoaded = initGis;
+  initGis();
+
+  function getToken() {
+    if (tokenValid()) return Promise.resolve(token);
+    if (!tokenClient) return Promise.reject({notReady:true});
+    return new Promise((res, rej) => {
+      onToken = r => {
+        if (r && r.access_token && google.accounts.oauth2.hasGrantedAllScopes(r, SCOPE)) {
+          token = r.access_token; tokenExp = Date.now() + (+r.expires_in || 3600) * 1000;
+          try { sessionStorage.setItem(TOKEN_KEY, JSON.stringify({t:token, exp:tokenExp})); } catch (e) {}
+          res(token);
+        } else rej({denied:true});
+      };
+      onTokenErr = e => rej(e || {});
+      tokenClient.requestAccessToken({prompt: wasConnected() ? '' : 'consent'});
+    });
+  }
+
+  async function api(url, opts = {}) {
+    if (!tokenValid()) { token = null; throw NEED_AUTH; }
+    const r = await fetch(url, {...opts, headers:{...(opts.headers || {}), Authorization:'Bearer ' + token}});
+    if (r.status === 401) { token = null; try { sessionStorage.removeItem(TOKEN_KEY); } catch (e) {} throw NEED_AUTH; }
+    return r;
+  }
+  async function getMeta(id) {
+    const r = await api(`${API}/files/${id}?fields=id,name,version,modifiedTime,trashed`);
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error('Drive ' + r.status);
+    const m = await r.json();
+    return m.trashed ? null : m;
+  }
+  async function downloadFile(id) {
+    const meta = await getMeta(id);
+    if (!meta) return null;
+    const r = await api(`${API}/files/${id}?alt=media`);
+    if (!r.ok) throw new Error('Drive ' + r.status);
+    const data = await r.json();
+    if (!data || !Array.isArray(data.blocks)) throw new Error('Not a script file');
+    return {meta, data};
+  }
+  async function folderId() {
+    if (folderCache) return folderCache;
+    const q = encodeURIComponent("mimeType='application/vnd.google-apps.folder' and name='Script Editor' and trashed=false");
+    const r = await api(`${API}/files?q=${q}&fields=files(id)&pageSize=1`);
+    if (!r.ok) throw new Error('Drive ' + r.status);
+    const j = await r.json();
+    if (j.files && j.files[0]) return (folderCache = j.files[0].id);
+    const c = await api(`${API}/files?fields=id`, {method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:'Script Editor', mimeType:'application/vnd.google-apps.folder'})});
+    if (!c.ok) throw new Error('Drive ' + c.status);
+    return (folderCache = (await c.json()).id);
+  }
+  async function upload(data) {
+    const name = (data.title.trim() || 'Untitled script') + '.script.json';
+    const metadata = doc.fileId ? {name}
+      : {name, mimeType:'application/json', parents:[await folderId()], appProperties:{scriptEditor:'1'}};
+    const boundary = 'se' + Math.random().toString(36).slice(2);
+    const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+                 `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(data)}\r\n--${boundary}--`;
+    const fields = 'fields=id,name,version,modifiedTime';
+    const url = doc.fileId ? `${UP}/files/${doc.fileId}?uploadType=multipart&${fields}` : `${UP}/files?uploadType=multipart&${fields}`;
+    const r = await api(url, {method:doc.fileId ? 'PATCH' : 'POST', headers:{'Content-Type':`multipart/related; boundary=${boundary}`}, body});
+    if (!r.ok) throw new Error('Drive ' + r.status);
+    return r.json();
+  }
+
+  function scheduleDrive() {
+    if (driveState !== 'on') return;
+    clearTimeout(driveTimer); driveTimer = setTimeout(() => saveToDrive(), 2500);
+  }
+  async function saveToDrive(force) {
+    clearTimeout(driveTimer);
+    if (driveState !== 'on' || conflict) return;
+    if (!doc.dirty && !force) return;
+    if (saving) { saveAgain = true; return; }
+    const data = currentData();
+    if (!doc.fileId && !hasContent(data)) { doc.dirty = false; setStatus('Connected to Drive'); return; }
+    saving = true;
+    const seq = changeSeq;
+    setStatus('Saving to Drive…');
+    try {
+      if (doc.fileId) {
+        const m = await getMeta(doc.fileId);
+        if (!m) { doc.fileId = null; doc.version = null; }
+        else if (doc.version && String(m.version) !== String(doc.version)) { showConflict(m); return; }
+      }
+      const meta = await upload(data);
+      doc.fileId = meta.id; doc.version = String(meta.version);
+      if (changeSeq === seq) doc.dirty = false; else saveAgain = true;
+      saveLocal();
+      setStatus('Saved to Drive');
+    } catch (e) { handleErr(e); }
+    finally {
+      saving = false;
+      if (saveAgain) { saveAgain = false; scheduleDrive(); }
+    }
+  }
+  async function checkRemote(force) {
+    if (driveState !== 'on' || !doc.fileId || saving || conflict) return;
+    if (!force && Date.now() - lastCheck < 4000) return;
+    lastCheck = Date.now();
+    try {
+      const m = await getMeta(doc.fileId);
+      if (!m || String(m.version) === String(doc.version)) return;
+      if (doc.dirty) { showConflict(m); return; }
+      const f = await downloadFile(doc.fileId);
+      if (f) { loadDoc(f.meta, f.data, true); setStatus('Updated from Drive'); }
+    } catch (e) { handleErr(e); }
+  }
+  async function syncNow() {
+    if (doc.dirty) await saveToDrive(true);
+    else { await checkRemote(true); if (!conflict && driveState === 'on') setStatus(doc.fileId ? 'Saved to Drive' : 'Connected to Drive'); }
+  }
+  async function flushCurrent() {
+    if (driveState === 'on' && doc.dirty) await saveToDrive(true);
+    return !(doc.dirty && hasContent(currentData()));
+  }
+  function loadDoc(meta, data, keepHistory) {
+    if (keepHistory) commitNow();
+    titleEl.value = data.title || '';
+    render(data.blocks);
+    doc = {fileId:meta.id, version:String(meta.version), dirty:false};
+    if (keepHistory) { commitNow(); updateUndo(); } else resetHistory();
+    if (document.activeElement === editor) setCaret(editor.firstElementChild, 0);
+    refreshUI(); saveLocal();
+  }
+  function handleErr(e) {
+    if (e && e.needAuth) {
+      driveState = 'reconnect'; updateDriveUI();
+      setStatus('Saved on this device. Reconnect to save to Drive');
+      return;
+    }
+    if (e instanceof TypeError || !navigator.onLine) { setStatus('Offline: saved on this device'); return; }
+    console.error(e);
+    setStatus('Drive save failed. Retrying soon');
+    setTimeout(() => { if (doc.dirty) saveToDrive(true); }, 15000);
+  }
+  function updateDriveUI() {
+    driveBtn.hidden = driveState === 'on';
+    driveBtn.textContent = driveState === 'reconnect' ? 'Reconnect Drive' : 'Connect Drive';
+    openBtn.hidden = driveState !== 'on';
+  }
+  function connect() {
+    // must run straight from the tap so the Google window isn't blocked
+    getToken().then(() => {
+      driveState = 'on';
+      try { localStorage.setItem(CONN_KEY, '1'); } catch (e) {}
+      updateDriveUI(); syncNow();
+    }).catch(e => {
+      if (e && e.notReady) setStatus('Google sign-in is still loading. Try again in a moment');
+      else if (e && e.denied) setStatus('Drive access wasn’t allowed. Tap Connect and tick the Drive box');
+      else if (driveState !== 'on') setStatus('Drive not connected');
+    });
+  }
+  driveBtn.addEventListener('click', connect);
+
+  function showConflict(m) { conflict = true; conflictMeta = m; conflictRow.hidden = false; setStatus('Not saved to Drive'); }
+  function hideConflict() { conflict = false; conflictMeta = null; conflictRow.hidden = true; }
+  document.getElementById('useDrive').addEventListener('click', async () => {
+    try {
+      const f = await downloadFile(doc.fileId);
+      hideConflict();
+      if (f) { loadDoc(f.meta, f.data, true); setStatus('Updated from Drive'); }
+      else { doc.fileId = null; doc.version = null; saveToDrive(true); }
+    } catch (e) { handleErr(e); }
+  });
+  document.getElementById('keepMine').addEventListener('click', () => {
+    if (conflictMeta) doc.version = String(conflictMeta.version);
+    hideConflict(); saveToDrive(true);
+  });
+
+  const fmtDate = s => new Date(s).toLocaleString('en-GB', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  const pickerMsg = t => { const p = document.createElement('p'); p.className = 'empty'; p.textContent = t; return p; };
+  function closePicker() { picker.hidden = true; }
+  async function openPicker() {
+    picker.hidden = false;
+    pickerList.replaceChildren(pickerMsg('Loading your scripts…'));
+    try {
+      const q = encodeURIComponent("appProperties has { key='scriptEditor' and value='1' } and trashed=false");
+      const r = await api(`${API}/files?q=${q}&orderBy=${encodeURIComponent('modifiedTime desc')}&pageSize=100&fields=files(id,name,modifiedTime)`);
+      if (!r.ok) throw new Error('Drive ' + r.status);
+      const files = (await r.json()).files || [];
+      if (!files.length) { pickerList.replaceChildren(pickerMsg('No scripts in Drive yet. Anything you write is saved there automatically.')); return; }
+      pickerList.replaceChildren(...files.map(f => {
+        const b = document.createElement('button');
+        b.className = 'item' + (f.id === doc.fileId ? ' current' : '');
+        const n = document.createElement('span'); n.textContent = f.name.replace(/\.script\.json$/, '');
+        const d = document.createElement('small'); d.textContent = f.id === doc.fileId ? 'Open now' : fmtDate(f.modifiedTime);
+        b.append(n, d);
+        b.addEventListener('click', () => openFile(f.id));
+        return b;
+      }));
+    } catch (e) {
+      handleErr(e);
+      pickerList.replaceChildren(pickerMsg(e && e.needAuth
+        ? 'Drive needs reconnecting. Close this and tap Reconnect Drive.'
+        : 'Couldn’t load your scripts. Check your connection and try again.'));
+    }
+  }
+  async function openFile(id) {
+    if (id === doc.fileId) { closePicker(); return; }
+    pickerList.replaceChildren(pickerMsg('Opening…'));
+    try {
+      if (!(await flushCurrent())) {
+        pickerList.replaceChildren(pickerMsg('Couldn’t save the current script to Drive, so it’s still open. Try again in a moment.'));
+        return;
+      }
+      if (conflict) { closePicker(); return; }
+      const f = await downloadFile(id);
+      if (!f) { pickerList.replaceChildren(pickerMsg('That script is no longer in Drive.')); return; }
+      loadDoc(f.meta, f.data, false);
+      closePicker(); setStatus('Saved to Drive'); window.scrollTo(0, 0);
+    } catch (e) {
+      handleErr(e);
+      pickerList.replaceChildren(pickerMsg('Couldn’t open that script. Check your connection and try again.'));
+    }
+  }
+  openBtn.addEventListener('click', openPicker);
+  document.getElementById('closePicker').addEventListener('click', closePicker);
+  picker.addEventListener('click', e => { if (e.target === picker) closePicker(); });
+
+  window.addEventListener('online', () => { if (driveState === 'on') { if (doc.dirty) saveToDrive(true); else checkRemote(true); } });
+  window.addEventListener('focus', () => checkRemote());
 
   /* ---------- events ---------- */
   editor.addEventListener('beforeinput', e => {
@@ -503,15 +805,26 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 
   let armTimer = null;
   function disarm() { clearTimeout(armTimer); newBtn.classList.remove('armed'); newBtn.textContent = 'New'; }
-  newBtn.addEventListener('click', () => {
+  newBtn.addEventListener('click', async () => {
     if (!newBtn.classList.contains('armed')) {
-      newBtn.classList.add('armed'); newBtn.textContent = 'Tap again to clear';
+      newBtn.classList.add('armed'); newBtn.textContent = 'Tap again to start new';
       armTimer = setTimeout(disarm, 3000); return;
     }
-    disarm(); commitNow();
+    disarm();
+    if (driveState === 'reconnect' && doc.dirty && hasContent(currentData())) {
+      setStatus('Reconnect Drive first so this script is saved'); return;
+    }
+    if (driveState === 'on' && !(await flushCurrent())) {
+      setStatus('Current script isn’t in Drive yet. Try again in a moment'); return;
+    }
+    const linked = !!doc.fileId;
+    commitNow();
     render([['scene', '', 0]]); titleEl.value = '';
+    doc = {fileId:null, version:null, dirty:false};
+    if (linked) resetHistory(); else commitNow();
     editor.focus(); setCaret(editor.firstElementChild, 0);
-    commitNow(); refreshUI(); saveNow(); window.scrollTo(0, 0);
+    refreshUI(); saveLocal(); window.scrollTo(0, 0);
+    if (driveState === 'on') setStatus('New script');
   });
 
   titleEl.addEventListener('input', scheduleSave);
@@ -526,8 +839,11 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     editor.focus(); setCaret(last, txt(last).length); ensureVisible(last); refreshUI();
   });
 
-  window.addEventListener('pagehide', saveNow);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
+  window.addEventListener('pagehide', saveLocal);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { saveLocal(); if (driveState === 'on' && doc.dirty) saveToDrive(true); }
+    else checkRemote();
+  });
 
   /* ---------- header that stays put above the iPad keyboard ---------- */
   const measure = () => document.documentElement.style.setProperty('--hdr', hdr.offsetHeight + 'px');
@@ -540,9 +856,16 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   /* ---------- start ---------- */
   try { document.execCommand('defaultParagraphSeparator', false, 'div'); } catch (e) {}
   const saved = load();
-  if (saved) { titleEl.value = saved.title || ''; render(saved.blocks); setStatus('Saved on this device'); }
-  else render([['scene', '', 0]]);
+  if (saved) {
+    titleEl.value = saved.title || ''; render(saved.blocks);
+    const d = saved.doc || {};
+    doc = {fileId:d.fileId || null, version:d.version || null, dirty:saved.doc ? !!d.dirty : true};
+  } else render([['scene', '', 0]]);
   commitNow(); updateUndo(); refreshUI();
+  driveState = tokenValid() ? 'on' : (wasConnected() ? 'reconnect' : 'off');
+  updateDriveUI();
+  if (driveState === 'on') syncNow();
+  else setStatus(saved ? 'Saved on this device' : '');
 })();
 </script>
 </body>
