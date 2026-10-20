@@ -70,6 +70,14 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .icon:not(:disabled):active{background:var(--pill)}
 .textbtn{height:42px;padding:0 14px;border:1px solid var(--line);background:transparent;color:var(--pill-ink);border-radius:10px;font-size:15px;font-weight:500;white-space:nowrap}
 .textbtn.armed{background:#b3261e;border-color:#b3261e;color:#fff}
+.textbtn.danger{color:#b3261e;border-color:rgba(179,38,30,.45)}
+.textbtn.danger-solid{background:#b3261e;border-color:#b3261e;color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .textbtn.danger{color:#ff8a80;border-color:rgba(255,138,128,.45)}}
+.del-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.del-row .meta{flex:1;min-width:0}
+.del-row .meta b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.del-row .meta small{color:var(--muted)}
+.confirm-actions{display:flex;flex-wrap:wrap;gap:10px;margin:16px 4px 4px}
 .fmt{display:flex;gap:2px;flex:0 0 auto;padding-right:8px;margin-right:2px;border-right:1px solid var(--line)}
 .fmt .icon{font-size:17px}
 .fmt .icon[aria-pressed="true"]{background:var(--on);color:var(--on-ink)}
@@ -314,6 +322,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       <button class="textbtn" id="pdfBtn">Download PDF</button>
       <button class="textbtn" id="exportBtn">Download FDX</button>
       <button class="textbtn" id="fountainBtn">Download Fountain</button>
+      <button class="textbtn danger" id="deleteBtn">Delete files</button>
     </div>
     <div class="list" id="pickerList"></div>
     <div class="sheet-foot" id="acctRow" hidden>
@@ -1650,6 +1659,69 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     importInput.value = '';
     if (f) importFile(f);
   });
+
+  /* ---------- deleting scripts: two steps, and only to the Drive bin ---------- */
+  async function showDelete() {
+    closePicker();
+    if (driveState !== 'on') {
+      openPanel('Delete files', el('p', {textContent:'Connect Drive first. Deleting works on the scripts saved in your Google Drive.'}));
+      return;
+    }
+    openPanel('Delete files', el('p', {textContent:'Loading your scripts…'}));
+    try {
+      const q = encodeURIComponent("appProperties has { key='scriptEditor' and value='1' } and trashed=false");
+      const r = await api(`${API}/files?q=${q}&orderBy=${encodeURIComponent('modifiedTime desc')}&pageSize=100&fields=files(id,name,modifiedTime)`);
+      if (!r.ok) throw new Error('Drive ' + r.status);
+      const files = (await r.json()).files || [];
+      const rows = files.map(f => {
+        const name = f.name.replace(/\.script\.json$/, '');
+        const btn = el('button', {className:'textbtn danger', textContent:'Delete…'});
+        btn.addEventListener('click', () => confirmDelete(f, name));
+        return el('div', {className:'del-row'},
+          el('div', {className:'meta'}, el('b', {textContent:name}), el('small', {textContent:(f.id === doc.fileId ? 'Open now · ' : '') + fmtDate(f.modifiedTime)})), btn);
+      });
+      openPanel('Delete files',
+        el('p', {textContent:'Choose a script to delete. You’ll be asked to confirm before anything is deleted.'}),
+        ...(rows.length ? rows : [el('p', {textContent:'There are no scripts in Drive to delete.'})]));
+    } catch (e) {
+      handleErr(e);
+      openPanel('Delete files', el('p', {textContent:e && e.needAuth ? 'Drive needs reconnecting. Close this and tap Reconnect Drive.' : 'Couldn’t load your scripts. Check your connection and try again.'}));
+    }
+  }
+  function confirmDelete(f, name) {
+    const cancel = el('button', {className:'textbtn primary', textContent:'No, keep it'});
+    const yes = el('button', {className:'textbtn danger-solid', textContent:`Yes, delete “${name}”`});
+    cancel.addEventListener('click', showDelete);
+    yes.addEventListener('click', () => doDelete(f, name, yes));
+    openPanel('Are you sure?',
+      el('p', {textContent:`This deletes “${name}”${f.id === doc.fileId ? ', the script you have open,' : ''} and all of its drafts.`}),
+      el('p', {textContent:'It goes to the bin in your Google Drive, where you can still restore it for 30 days.'}),
+      el('div', {className:'confirm-actions'}, cancel, yes));
+    cancel.focus();
+  }
+  async function doDelete(f, name, btn) {
+    btn.disabled = true; btn.textContent = 'Deleting…';
+    try {
+      const r = await api(`${API}/files/${f.id}?fields=id,trashed`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})});
+      if (!r.ok) throw new Error('Drive ' + r.status);
+      if (f.id === doc.fileId) {
+        // the open script was deleted: start a fresh one so it isn't saved back to Drive
+        clearTimeout(driveTimer);
+        render([['scene', '', 0]]); titleEl.value = '';
+        titlePage = {...TP_DEFAULT(), credit:titlePage.credit, author:titlePage.author, contact:titlePage.contact};
+        settings = {sceneNumbers:false}; drafts = []; renderTpCard();
+        doc = {fileId:null, rev:null, dirty:false};
+        resetHistory(); refreshUI(); saveLocal(); pageScrollTop();
+      }
+      setStatus(`Moved “${name}” to the Drive bin`);
+      showDelete();
+    } catch (e) {
+      handleErr(e);
+      btn.disabled = false; btn.textContent = `Yes, delete “${name}”`;
+      setStatus('Couldn’t delete that script. Check your connection and try again');
+    }
+  }
+  document.getElementById('deleteBtn').addEventListener('click', showDelete);
 
   openBtn.addEventListener('click', openPicker);
   document.getElementById('closePicker').addEventListener('click', closePicker);
