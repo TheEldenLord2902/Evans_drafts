@@ -157,7 +157,6 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .rail .types{flex-direction:column;overflow:visible;gap:6px}
 .rail .type{width:100%;padding:0 6px;font-size:13px;border-radius:12px}
 .rail .textbtn{width:100%;height:auto;min-height:42px;padding:6px;font-size:14px;line-height:1.2;white-space:normal}
-.rail .textbtn.tool-b{font-size:13px;min-height:38px}
 .rail #title{flex:none;width:100%;font-size:15px;padding:9px 8px;background:var(--pill);white-space:nowrap;text-overflow:ellipsis}
 .rail #pages,.rail #status{display:block;white-space:normal;text-align:center;font-size:12px;line-height:1.35}
 html.rails{--rail:112px;--fs:min(17px, calc((100vw - 2 * var(--rail) - 24px) / 39.5))}
@@ -2159,20 +2158,6 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   document.documentElement.classList.toggle('shell', isIOSDevice);
   const pair = el('div', {className:'pair'});
   const label = t => el('div', {className:'rail-label', textContent:t});
-  // every tool as its own button in the left bar, so nothing hides behind the Tools menu
-  const RAIL_TOOLS = [['find', 'Find'], ['scenes', 'Scenes'], ['reports', 'Reports'], ['drafts', 'Drafts'], ['dual', 'Dual dialogue'], ['numbers', 'Scene numbers'], ['rails', 'Top toolbar']];
-  const railTools = RAIL_TOOLS.map(([tool, text]) => {
-    const b = el('button', {className:'textbtn tool-b', textContent:text});
-    b.dataset.tool = tool;
-    b.addEventListener('pointerdown', e => e.preventDefault());
-    b.addEventListener('mousedown', e => e.preventDefault());
-    b.addEventListener('click', () => { document.querySelector(`#toolsSheet [data-tool="${tool}"]`).click(); railLabels(); });
-    return b;
-  });
-  function railLabels() {
-    const n = railTools.find(b => b.dataset.tool === 'numbers');
-    n.textContent = 'Scene numbers: ' + (settings.sceneNumbers ? 'on' : 'off');
-  }
   const movable = [titleEl, document.getElementById('pages'), statusEl, undoBtn, redoBtn, document.querySelector('.fmt'),
     document.querySelector('.types'), openBtn, document.getElementById('toolsBtn'), newBtn, driveBtn];
   const homes = new Map(movable.map(n => { const ph = document.createComment(''); n.before(ph); return [n, ph]; }));
@@ -2195,10 +2180,10 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     rowMain.hidden = rowTypes.hidden = on;
     if (on) {
       pair.replaceChildren(undoBtn, redoBtn);
-      railL.replaceChildren(pair, label('Style'), document.querySelector('.fmt'), label('Line'), document.querySelector('.types'),
-        label('Tools'), ...railTools);
-      railLabels();
-      railR.replaceChildren(titleEl, document.getElementById('pages'), statusEl, openBtn, newBtn, driveBtn);
+      // left: line types right at the top. right: script details, then files, new, tools, undo/redo, style
+      railL.replaceChildren(document.querySelector('.types'));
+      railR.replaceChildren(titleEl, document.getElementById('pages'), statusEl, driveBtn,
+        openBtn, newBtn, document.getElementById('toolsBtn'), pair, label('Style'), document.querySelector('.fmt'));
     } else {
       movable.forEach(n => homes.get(n).after(n));
       railL.replaceChildren(); railR.replaceChildren();
@@ -2208,7 +2193,6 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       if (isShell) { window.scrollTo(0, 0); mainEl.scrollTop = y; } else { mainEl.scrollTop = 0; window.scrollTo(0, y); }
     });
     document.getElementById('railState').textContent = on ? 'On' : 'Off';
-    document.getElementById('toolsBtn').hidden = on;
   }
   // with side bars the top bar only appears for find and replace, or a save warning
   function syncHeader() { hdr.hidden = railsOn && findBar.hidden && conflictRow.hidden; measure(); }
