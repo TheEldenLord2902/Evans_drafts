@@ -156,7 +156,19 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .rail #pages,.rail #status{display:block;white-space:normal;text-align:center;font-size:12px;line-height:1.35}
 .rail #fullBtn{width:100%}
 html.rails{--rail:112px;--fs:min(17px, calc((100vw - 2 * var(--rail) - 24px) / 39.5))}
-html.rails main{padding-left:calc(var(--rail) + 12px);padding-right:calc(var(--rail) + 12px)}
+/* app shell (iPad, and side toolbars): nothing on screen moves, only the script scrolls */
+html.shell{padding:0;height:100%;overflow:hidden}
+html.shell body{position:fixed;left:0;right:0;top:var(--vvt, 0px);height:var(--vvh, 100%);overflow:hidden;margin:0}
+html.shell header{position:absolute;top:0;left:0;right:0}
+html.shell main{position:absolute;top:0;bottom:0;left:0;right:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:calc(var(--hdr, 0px) + 16px) 10px 0}
+html.shell main .page{margin-bottom:45vh}
+html.rails .rail{position:absolute;top:0;bottom:0;height:auto}
+html.rails header{left:var(--rail);right:var(--rail)}
+html.rails main{left:var(--rail);right:var(--rail);padding:calc(var(--hdr, 0px) + env(safe-area-inset-top, 0px) + 16px) 12px 0}
+/* in full screen on iPad, keep clear of Safari's own close and minimise buttons at the top left */
+html.ios.fs #railL{padding-top:calc(env(safe-area-inset-top, 0px) + 62px)}
+html.ios.fs:not(.rails) header{padding-top:calc(env(safe-area-inset-top, 0px) + 54px)}
 html.rails header{left:var(--rail);right:var(--rail)}
 html.rails #hint{display:none}
 main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px 0}
@@ -181,11 +193,15 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 .el[data-type="scene"]{text-transform:uppercase;font-weight:700;margin-top:2.7em}
 .el[data-type="scene"]:first-child{margin-top:0}
 .el[data-type="character"]{text-transform:uppercase;margin-left:22ch}
+@property --ind{syntax:'<length>';inherits:true;initial-value:0px}
+@property --pw{syntax:'<length>';inherits:true;initial-value:0px}
+@property --gut{syntax:'<length>';inherits:true;initial-value:0px}
+.editor{--pw:calc(60ch + 3.5em);--gut:1.75em}
 .el{--ind:0ch}
 .el[data-type="character"]{--ind:22ch}
 .el[data-type="paren"]{--ind:16ch}
 .el[data-type="dialogue"]{--ind:10ch}
-.el[data-pg]:not(.blank)::before{content:attr(data-pg);position:absolute;top:-.8em;left:calc(-1 * var(--ind) - 1.75em);width:calc(60ch + 3.5em);border-top:1px dashed var(--faint);padding:3px 0 0 4px;font:600 11px/1 var(--ui);color:var(--muted);pointer-events:none;text-align:left;font-style:normal;text-transform:none}
+.el[data-pg]:not(.blank)::before{content:attr(data-pg);position:absolute;top:-.8em;left:calc(-1 * var(--ind) - var(--gut));width:var(--pw);border-top:1px dashed var(--faint);padding:3px 0 0 4px;font:600 11px/1 var(--ui);color:var(--muted);pointer-events:none;text-align:left;font-style:normal;text-transform:none}
 .el[data-type="dialogue"][data-pg]:not(.blank),.el[data-type="paren"][data-pg]:not(.blank){margin-top:.9em}
 .el[data-type="character"].contd::after{content:" (CONT'D)";color:var(--muted)}
 .el.dual{background:rgba(168,130,58,.12);border-radius:3px}
@@ -357,6 +373,12 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   const newBtn = document.getElementById('new');
   const typeBtns = [...document.querySelectorAll('.type')];
   const fmtBtns = [...document.querySelectorAll('.fmt button')];
+
+  /* ---------- scrolling: the window, or the script area when side toolbars are on ---------- */
+  const mainEl = document.querySelector('main');
+  const scroller = () => document.documentElement.classList.contains('shell') ? mainEl : window;
+  const pageScrollBy = (x, y) => scroller().scrollBy(x, y);
+  const pageScrollTop = () => scroller().scrollTo(0, 0);
 
   /* ---------- blocks ---------- */
   const txt = b => b.textContent.replace(/\u200b/g, '');
@@ -533,8 +555,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       if (!r && b) r = b.getBoundingClientRect();
       if (!r) return;
       const minY = ot + hdr.offsetHeight + 12, maxY = ot + vh - 28;
-      if (r.bottom > maxY) window.scrollBy(0, r.bottom - maxY);
-      else if (r.top < minY) window.scrollBy(0, r.top - minY);
+      if (r.bottom > maxY) pageScrollBy(0, r.bottom - maxY);
+      else if (r.top < minY) pageScrollBy(0, r.top - minY);
     });
   }
 
@@ -1016,7 +1038,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     render([['scene', '', 0]]); titleEl.value = ''; titlePage = TP_DEFAULT(); settings = {sceneNumbers:false}; drafts = []; renderTpCard();
     doc = {fileId:null, rev:null, dirty:false};
     resetHistory(); refreshUI(); saveLocal();
-    closePicker(); window.scrollTo(0, 0);
+    closePicker(); pageScrollTop();
     setStatus('Disconnected from Drive');
   }
   document.getElementById('disconnect').addEventListener('click', disconnect);
@@ -1062,7 +1084,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       const f = await downloadFile(id);
       if (!f) { pickerList.replaceChildren(pickerMsg('That script is no longer in Drive.')); return; }
       loadDoc(f.meta, f.data, false);
-      closePicker(); setStatus('Saved to Drive'); window.scrollTo(0, 0);
+      closePicker(); setStatus('Saved to Drive'); pageScrollTop();
     } catch (e) {
       handleErr(e);
       pickerList.replaceChildren(pickerMsg('Couldn’t open that script. Check your connection and try again.'));
@@ -1200,7 +1222,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     renderTpCard();
     doc = {fileId:null, rev:null, dirty:false};
     if (linked) resetHistory(); else commitNow();
-    refreshUI(); window.scrollTo(0, 0);
+    refreshUI(); pageScrollTop();
     scheduleSave();
   }
   /* ---------- pages: A4, Courier 12, industry layout ---------- */
@@ -1681,6 +1703,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   }
   editor.addEventListener('blur', hideSuggest);
   window.addEventListener('scroll', positionSuggest, {passive:true});
+  mainEl.addEventListener('scroll', positionSuggest, {passive:true});
   editor.addEventListener('input', () => { dismissedKey = null; });
 
   /* ---------- sheets for the tools ---------- */
@@ -1703,7 +1726,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     editor.focus({preventScroll:true});
     setCaret(b, off === undefined ? txt(b).length : off);
     const r = b.getBoundingClientRect();
-    window.scrollBy(0, r.top - hdr.offsetHeight - 80);
+    pageScrollBy(0, r.top - hdr.offsetHeight - 80);
     refreshUI();
   }
   // edits made from a tool: same as edit() but without scrolling back to the cursor
@@ -1735,7 +1758,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     if (scroll && mIdx >= 0) {
       let r; try { r = rangeOf(matches[mIdx]).getBoundingClientRect(); } catch (e) { r = matches[mIdx].b.getBoundingClientRect(); }
       const vv = window.visualViewport, vH = vv ? vv.height : innerHeight;
-      if (r.top < hdr.offsetHeight + 20 || r.bottom > vH - 40) window.scrollBy(0, r.top - hdr.offsetHeight - vH / 4);
+      if (r.top < hdr.offsetHeight + 20 || r.bottom > vH - 40) pageScrollBy(0, r.top - hdr.offsetHeight - vH / 4);
       if (!hasHighlight) { const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rangeOf(matches[mIdx])); }
     }
   }
@@ -1884,7 +1907,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
         if (back.dataset.armed) {
           commitNow();
           render(dr.blocks); titleEl.value = dr.title || ''; titlePage = {...TP_DEFAULT(), ...(dr.titlePage || {})}; renderTpCard();
-          commitNow(); refreshUI(); scheduleSave(); closePanel(); window.scrollTo(0, 0);
+          commitNow(); refreshUI(); scheduleSave(); closePanel(); pageScrollTop();
           setStatus('Draft restored. Undo brings back what you had');
         } else { back.dataset.armed = '1'; back.textContent = 'Tap again to restore'; back.classList.add('armed'); }
       });
@@ -2093,6 +2116,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   const rowMain = document.getElementById('rowMain'), rowTypes = document.getElementById('rowTypes');
   const fullBtn = document.getElementById('fullBtn');
   const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  document.documentElement.classList.toggle('ios', isIOSDevice);
+  document.documentElement.classList.toggle('shell', isIOSDevice);
   const pair = el('div', {className:'pair'});
   const label = t => el('div', {className:'rail-label', textContent:t});
   // every tool as its own button in the left bar, so nothing hides behind the Tools menu
@@ -2121,8 +2146,12 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   }
   function setRails(on) {
     if (on === railsOn) return;
+    const wasShell = document.documentElement.classList.contains('shell');
+    const y = wasShell ? mainEl.scrollTop : window.scrollY;
     railsOn = on;
     document.documentElement.classList.toggle('rails', on);
+    document.documentElement.classList.toggle('shell', isIOSDevice || on);
+    const isShell = isIOSDevice || on;
     railL.hidden = railR.hidden = !on;
     rowMain.hidden = rowTypes.hidden = on;
     if (on) {
@@ -2136,6 +2165,9 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       railL.replaceChildren(); railR.replaceChildren();
     }
     syncHeader(); pin();
+    if (wasShell !== isShell) requestAnimationFrame(() => {
+      if (isShell) { window.scrollTo(0, 0); mainEl.scrollTop = y; } else { mainEl.scrollTop = 0; window.scrollTo(0, y); }
+    });
     document.getElementById('railState').textContent = on ? 'On' : 'Off';
     document.getElementById('toolsBtn').hidden = on;
   }
@@ -2167,6 +2199,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   }
   function syncFull() {
     const on = !!fsEl();
+    document.documentElement.classList.toggle('fs', on);
+    setTimeout(() => { pin(); measure(); }, 50);
     fullBtn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
     fullBtn.title = on ? 'Exit full screen' : 'Full screen';
     fullBtn.innerHTML = on
@@ -2297,7 +2331,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     doc = {fileId:null, rev:null, dirty:false};
     if (linked) resetHistory(); else commitNow();
     editor.focus(); setCaret(editor.firstElementChild, 0);
-    refreshUI(); saveLocal(); window.scrollTo(0, 0);
+    refreshUI(); saveLocal(); pageScrollTop();
     if (driveState === 'on') setStatus('New script');
   });
 
@@ -2349,14 +2383,23 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   measure();
   const vv = window.visualViewport;
   function pin() {
-    const y = vv ? Math.max(0, vv.offsetTop) : 0;
-    hdr.style.transform = y ? `translateY(${y}px)` : '';
-    for (const r of [railL, railR]) {
-      r.style.transform = y ? `translateY(${y}px)` : '';
-      r.style.height = vv ? vv.height + 'px' : '';
+    const shell = document.documentElement.classList.contains('shell');
+    const root = document.documentElement.style;
+    if (shell) {
+      // only follow Safari's panning while the keyboard is up; otherwise the app sits flat at the top
+      const kb = vv && vv.height < window.innerHeight - 120;
+      root.setProperty('--vvh', (vv ? vv.height : window.innerHeight) + 'px');
+      root.setProperty('--vvt', (kb ? Math.max(0, vv.offsetTop) : 0) + 'px');
+      if (!kb && window.scrollY) window.scrollTo(0, 0);
+      hdr.style.transform = '';
+    } else {
+      const y = vv ? Math.max(0, vv.offsetTop) : 0;
+      hdr.style.transform = y ? `translateY(${y}px)` : '';
     }
   }
   if (vv) { vv.addEventListener('scroll', pin); vv.addEventListener('resize', pin); }
+  window.addEventListener('orientationchange', () => setTimeout(pin, 300));
+  window.addEventListener('scroll', () => { if (document.documentElement.classList.contains('shell') && window.scrollY && !(vv && vv.height < window.innerHeight - 120)) window.scrollTo(0, 0); }, {passive:true});
 
   /* ---------- start ---------- */
   try { document.execCommand('defaultParagraphSeparator', false, 'div'); } catch (e) {}
@@ -2369,7 +2412,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     doc = {fileId:d.fileId || null, rev:d.rev || null, dirty:saved.doc ? (!!d.dirty || !d.rev) : true};
   } else render([['scene', '', 0]]);
   commitNow(); updateUndo(); refreshUI(); renderTpCard();
-  setRails(wantRails());
+  setRails(wantRails()); pin();
   driveState = tokenValid() ? 'on' : (wasConnected() ? 'reconnect' : 'off');
   updateDriveUI();
   if (driveState === 'on') syncNow();
