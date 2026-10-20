@@ -131,7 +131,7 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .tbl th,.tbl td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 .tbl th{color:var(--muted);font-weight:500}
 .tbl td.num,.tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
-.scene-row{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line)}
+.scene-row{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line);padding-left:6px}
 .scene-row .item{flex:1;min-width:0;font-family:var(--mono);font-size:14px}
 .scene-row .item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase}
 .scene-row .icon:disabled{opacity:.25}
@@ -185,6 +185,18 @@ html.ios.fs #railL{padding-top:calc(env(safe-area-inset-top, 0px) + 62px)}
 html.ios.fs:not(.rails) header{padding-top:calc(env(safe-area-inset-top, 0px) + 54px)}
 html.rails header{left:var(--rail);right:var(--rail)}
 html.rails #hint{display:none}
+::highlight(spell){text-decoration:underline wavy #d93025;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-skip-ink:none}
+.spellpop{position:fixed;z-index:31;min-width:220px;max-width:min(320px, 90vw);background:var(--page);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:4px;font:15px var(--ui)}
+.spellpop button{display:block;width:100%;text-align:left;padding:9px 12px;border:0;background:transparent;color:var(--ink);border-radius:7px;font:inherit}
+.spellpop button:hover,.spellpop button:focus-visible{background:var(--pill)}
+.spellpop .sug{font-weight:600}
+.spellpop .muted{color:var(--muted);padding:9px 12px;font-size:13px}
+.spellpop hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.dict-add{display:flex;gap:8px;margin:4px 4px 10px}
+.dict-add input{flex:1;min-width:0;height:42px;font:16px var(--ui);color:var(--ink);background:var(--pill);border:1px solid transparent;border-radius:10px;padding:0 12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 4px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--pill);border-radius:16px;padding:5px 6px 5px 12px;font-size:14px}
+.chip button{border:0;background:transparent;color:var(--muted);font-size:16px;line-height:1;padding:2px 6px;border-radius:10px}
 main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px 0}
 .page{
   position:relative;font-size:var(--fs);font-family:var(--mono);
@@ -219,6 +231,15 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 .el[data-type="dialogue"][data-pg]:not(.blank),.el[data-type="paren"][data-pg]:not(.blank){margin-top:.9em}
 .el[data-type="character"].contd::after{content:" (CONT'D)";color:var(--muted)}
 .el.dual{background:rgba(168,130,58,.12);border-radius:3px}
+.el[data-alts]{box-shadow:-9px 0 0 -7px var(--brass)}
+.el[data-type="scene"][data-color]{border-radius:3px;margin-left:-12px;padding-left:12px;
+  background:linear-gradient(90deg, var(--sc) 0 5px, transparent 5px), color-mix(in srgb, var(--sc) 14%, transparent)}
+[data-color="1"]{--sc:#e5484d}[data-color="2"]{--sc:#f76b15}[data-color="3"]{--sc:#e2a336}[data-color="4"]{--sc:#30a46c}
+[data-color="5"]{--sc:#12a594}[data-color="6"]{--sc:#3e63dd}[data-color="7"]{--sc:#8e4ec6}[data-color="8"]{--sc:#8b8d98}
+.swatch{width:26px;height:26px;border-radius:50%;border:2px solid var(--page);box-shadow:0 0 0 1px var(--line);background:var(--sc, transparent);flex:none;padding:0}
+.swatch.none{background:linear-gradient(135deg, transparent 45%, var(--muted) 45% 55%, transparent 55%)}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.palette{display:flex;flex-wrap:wrap;gap:8px;padding:8px 4px 12px 12px}
 .el[data-type="scene"][data-sn]::after{content:attr(data-sn);position:absolute;top:0;right:-1.6em;font-weight:400;color:var(--muted)}
 .el[data-type="scene"][data-sn]{padding-right:.2em}
 .el[data-type="paren"]{margin:0 19ch 0 16ch}
@@ -322,6 +343,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       <button class="textbtn" id="pdfBtn">Download PDF</button>
       <button class="textbtn" id="exportBtn">Download FDX</button>
       <button class="textbtn" id="fountainBtn">Download Fountain</button>
+      <button class="textbtn" id="docxBtn">Download Word</button>
+      <button class="textbtn" id="txtBtn">Download text</button>
       <button class="textbtn danger" id="deleteBtn">Delete files</button>
     </div>
     <div class="list" id="pickerList"></div>
@@ -357,6 +380,11 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       <button class="item tool" data-tool="drafts"><span>Drafts</span><small>Save and compare versions</small></button>
       <button class="item tool" data-tool="dual"><span>Dual dialogue</span><small>Pair this speech with the one before</small></button>
       <button class="item tool" data-tool="numbers"><span>Scene numbers</span><small id="snState">Off</small></button>
+      <button class="item tool" data-tool="notes"><span>Notes</span><small>Every note in the script</small></button>
+      <button class="item tool" data-tool="rename"><span>Rename a character</span><small>Everywhere they appear</small></button>
+      <button class="item tool" data-tool="alts"><span>Alternate lines</span><small>Other versions of this line</small></button>
+      <button class="item tool" data-tool="spell"><span>Spelling and dictionary</span><small id="spellState">On</small></button>
+      <button class="item tool" data-tool="paper"><span>Paper size</span><small id="paperState">A4</small></button>
       <button class="item tool" data-tool="rails"><span>Side toolbars</span><small id="railState">Off</small></button>
     </div>
   </div>
@@ -368,8 +396,981 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   </div>
 </div>
 <div class="suggest" id="suggest" role="listbox" aria-label="Suggestions" hidden></div>
+<div class="spellpop" id="spellPop" role="menu" aria-label="Spelling" hidden></div>
 <input type="file" id="importInput" hidden>
 
+<script>
+/* Typo.js 1.4.0, BSD 3-Clause licence, https://github.com/cfinke/Typo.js */
+/* globals chrome: false */
+/* globals __dirname: false */
+/* globals require: false */
+/* globals Buffer: false */
+/* globals module: false */
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
+var Typo;
+(function () {
+    "use strict";
+    function runGenSync(gen) {
+        var next;
+        while (!(next = gen.next()).done) { }
+        return next.value;
+    }
+    function runGenAsync(gen) {
+        if ((typeof window !== "undefined") && window.requestIdleCallback) {
+            // run the generator in idle callbacks
+            //
+            // The generator should yield periodically to allow prompt return to the event loop
+            // when the deadline is crossed.
+            return new Promise(function (resolve, reject) {
+                function idleCallback(deadline) {
+                    try {
+                        var next = void 0;
+                        while (!(next = gen.next()).done) {
+                            if (!deadline.timeRemaining()) {
+                                window.requestIdleCallback(idleCallback);
+                                return;
+                            }
+                        }
+                        resolve(next.value);
+                    }
+                    catch (err) {
+                        reject(err);
+                    }
+                }
+                window.requestIdleCallback(idleCallback);
+            });
+        }
+        else {
+            // fallback: run the generator in a single callback
+            return (function () {
+                return __awaiter(this, void 0, void 0, function () { return __generator(this, function (_a) {
+                    return [2 /*return*/, runGenSync(gen)];
+                }); });
+            })();
+        }
+    }
+    /**
+     * Typo constructor.
+     *
+     * @param {string} [dictionary] The locale code of the dictionary being used. e.g.,
+     *                              "en_US". This is only used to auto-load dictionaries.
+     * @param {string} [affData]    The data from the dictionary's .aff file. If omitted
+     *                              and Typo.js is being used in a Chrome extension, the .aff
+     *                              file will be loaded automatically from
+     *                              lib/typo/dictionaries/[dictionary]/[dictionary].aff
+     *                              In other environments, it will be loaded from
+     *                              [settings.dictionaryPath]/dictionaries/[dictionary]/[dictionary].aff
+     * @param {string} [wordsData]  The data from the dictionary's .dic file. If omitted
+     *                              and Typo.js is being used in a Chrome extension, the .dic
+     *                              file will be loaded automatically from
+     *                              lib/typo/dictionaries/[dictionary]/[dictionary].dic
+     *                              In other environments, it will be loaded from
+     *                              [settings.dictionaryPath]/dictionaries/[dictionary]/[dictionary].dic
+     * @param {Object} [settings]   Constructor settings. Available properties are:
+     *                              {string} [dictionaryPath]: path to load dictionary from in non-chrome
+     *                              environment.
+     *                              {Object} [flags]: flag information.
+     *                              {boolean} [asyncLoad]: If true, affData and wordsData will be loaded
+     *                              and parsed asynchronously. The parsing is scheduled in idle
+     *                              callbacks if available. You may consider loading a polyfill for
+     *                              window.requestIdleCallback to avoid freezes in browsers not
+     *                              supporting idle callbacks (eg: Safari).
+     *                              {Function} [loadedCallback]: Called when both affData and wordsData
+     *                              have been loaded. Only used if asyncLoad is set to true. The parameter
+     *                              is the instantiated Typo object.
+     *
+     * @returns {Typo} A Typo object.
+     */
+    Typo = function (dictionary, affData, wordsData, settings) {
+        settings = settings || {};
+        this.dictionary = null;
+        this.rules = {};
+        this.dictionaryTable = new Map();
+        this.compoundRules = [];
+        this.compoundRuleCodes = {};
+        this.replacementTable = [];
+        this.flags = settings.flags || {};
+        this.memoized = {};
+        this.loaded = false;
+        var self = this;
+        var path;
+        // Loop-control variables.
+        var i, j, _len, _jlen;
+        if (dictionary) {
+            self.dictionary = dictionary;
+            // If the data is preloaded, just setup the Typo object.
+            if (affData && wordsData) {
+                setup();
+            }
+            else {
+                if (typeof window !== 'undefined') {
+                    // Webpage or browser extension
+                    if (settings.dictionaryPath) {
+                        path = settings.dictionaryPath;
+                    }
+                    else {
+                        path = "typo/dictionaries";
+                    }
+                    // Browser extensions assume that the file is being loaded from the root of the extension.
+                    if (window.chrome && window.chrome.runtime && window.chrome.runtime.getURL) {
+                        path = window.chrome.runtime.getURL(path);
+                    }
+                    else if (window.browser && window.browser.runtime && window.browser.runtime.getURL) {
+                        path = window.browser.runtime.getURL(path);
+                    }
+                }
+                else if (typeof __dirname !== 'undefined') {
+                    // Node
+                    path = __dirname + '/dictionaries';
+                }
+                else {
+                    // Node
+                    path = './dictionaries';
+                }
+                if (!affData)
+                    readDataFile(path + "/" + dictionary + "/" + dictionary + ".aff", setAffData);
+                if (!wordsData)
+                    readDataFile(path + "/" + dictionary + "/" + dictionary + ".dic", setWordsData);
+            }
+        }
+        function readDataFile(url, setFunc) {
+            var response = self._readFile(url, null, settings === null || settings === void 0 ? void 0 : settings.asyncLoad);
+            if (settings === null || settings === void 0 ? void 0 : settings.asyncLoad) {
+                response.then(function (data) {
+                    setFunc(data);
+                });
+            }
+            else {
+                setFunc(response);
+            }
+        }
+        function setAffData(data) {
+            affData = data;
+            if (wordsData) {
+                setup();
+            }
+        }
+        function setWordsData(data) {
+            wordsData = data;
+            if (affData) {
+                setup();
+            }
+        }
+        function setup() {
+            if (settings === null || settings === void 0 ? void 0 : settings.asyncLoad) {
+                runGenAsync(setupGen()).catch(function (err) { return console.log("Dictionary parse error: ".concat(err)); });
+            }
+            else {
+                runGenSync(setupGen());
+            }
+        }
+        function setupGen() {
+            var rule, _a, ruleText, expressionText, character;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        self.rules = self._parseAFF(affData);
+                        // Save the rule codes that are used in compound rules.
+                        self.compoundRuleCodes = {};
+                        for (i = 0, _len = self.compoundRules.length; i < _len; i++) {
+                            rule = self.compoundRules[i];
+                            for (j = 0, _jlen = rule.length; j < _jlen; j++) {
+                                self.compoundRuleCodes[rule[j]] = [];
+                            }
+                        }
+                        // If we add this ONLYINCOMPOUND flag to self.compoundRuleCodes, then _parseDIC
+                        // will do the work of saving the list of words that are compound-only.
+                        if ("ONLYINCOMPOUND" in self.flags) {
+                            self.compoundRuleCodes[self.flags.ONLYINCOMPOUND] = [];
+                        }
+                        _a = self;
+                        return [5 /*yield**/, __values(self._parseDICGen(wordsData))];
+                    case 1:
+                        _a.dictionaryTable = _b.sent();
+                        // Get rid of any codes from the compound rule codes that are never used
+                        // (or that were special regex characters).  Not especially necessary...
+                        for (i in self.compoundRuleCodes) {
+                            if (self.compoundRuleCodes[i].length === 0) {
+                                delete self.compoundRuleCodes[i];
+                            }
+                        }
+                        // Build the full regular expressions for each compound rule.
+                        // I have a feeling (but no confirmation yet) that this method of
+                        // testing for compound words is probably slow.
+                        for (i = 0, _len = self.compoundRules.length; i < _len; i++) {
+                            ruleText = self.compoundRules[i];
+                            expressionText = "";
+                            for (j = 0, _jlen = ruleText.length; j < _jlen; j++) {
+                                character = ruleText[j];
+                                if (character in self.compoundRuleCodes) {
+                                    expressionText += "(" + self.compoundRuleCodes[character].join("|") + ")";
+                                }
+                                else {
+                                    expressionText += character;
+                                }
+                            }
+                            self.compoundRules[i] = new RegExp('^' + expressionText + '$', "i");
+                        }
+                        self.loaded = true;
+                        if ((settings === null || settings === void 0 ? void 0 : settings.asyncLoad) && (settings === null || settings === void 0 ? void 0 : settings.loadedCallback)) {
+                            settings.loadedCallback(self);
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        }
+        return this;
+    };
+    Typo.prototype = {
+        /**
+         * Loads a Typo instance from a hash of all of the Typo properties.
+         *
+         * @param {object} obj A hash of Typo properties, probably gotten from a JSON.parse(JSON.stringify(typo_instance)).
+         */
+        load: function (obj) {
+            for (var i in obj) {
+                if (obj.hasOwnProperty(i)) {
+                    this[i] = obj[i];
+                }
+            }
+            return this;
+        },
+        /**
+         * Read the contents of a file.
+         *
+         * @param {string} path The path (relative) to the file.
+         * @param {string} [charset="ISO8859-1"] The expected charset of the file
+         * @param {boolean} async If true, the file will be read asynchronously. For node.js this does nothing, all
+         *        files are read synchronously.
+         * @returns {string} The file data if async is false, otherwise a promise object. If running node.js, the data is
+         *          always returned.
+         */
+        _readFile: function (path, charset, async) {
+            var _a;
+            charset = charset || "utf8";
+            if (typeof XMLHttpRequest !== 'undefined') {
+                var req_1 = new XMLHttpRequest();
+                req_1.open("GET", path, !!async);
+                (_a = req_1.overrideMimeType) === null || _a === void 0 ? void 0 : _a.call(req_1, "text/plain; charset=" + charset);
+                if (!!async) {
+                    var promise = new Promise(function (resolve, reject) {
+                        req_1.onload = function () {
+                            if (req_1.status === 200) {
+                                resolve(req_1.responseText);
+                            }
+                            else {
+                                reject(req_1.statusText);
+                            }
+                        };
+                        req_1.onerror = function () {
+                            reject(req_1.statusText);
+                        };
+                    });
+                    req_1.send(null);
+                    return promise;
+                }
+                else {
+                    req_1.send(null);
+                    return req_1.responseText;
+                }
+            }
+            else if (typeof require !== 'undefined') {
+                // Node.js
+                var fs = require("fs");
+                try {
+                    if (fs.existsSync(path)) {
+                        return fs.readFileSync(path, charset);
+                    }
+                    else {
+                        console.log("Path " + path + " does not exist.");
+                    }
+                }
+                catch (e) {
+                    console.log(e);
+                }
+                return '';
+            }
+            return '';
+        },
+        /**
+         * Parse the rules out from a .aff file.
+         *
+         * @param {string} data The contents of the affix file.
+         * @returns object The rules from the file.
+         */
+        _parseAFF: function (data) {
+            var rules = {};
+            var line, subline, numEntries, lineParts;
+            var i, j, _len, _jlen;
+            var lines = data.split(/\r?\n/);
+            for (i = 0, _len = lines.length; i < _len; i++) {
+                // Remove comment lines
+                line = this._removeAffixComments(lines[i]);
+                line = line.trim();
+                if (!line) {
+                    continue;
+                }
+                var definitionParts = line.split(/\s+/);
+                var ruleType = definitionParts[0];
+                if (ruleType === "PFX" || ruleType === "SFX") {
+                    var ruleCode = definitionParts[1];
+                    var combineable = definitionParts[2];
+                    numEntries = parseInt(definitionParts[3], 10);
+                    var entries = [];
+                    for (j = i + 1, _jlen = i + 1 + numEntries; j < _jlen; j++) {
+                        subline = lines[j];
+                        lineParts = subline.split(/\s+/);
+                        var charactersToRemove = lineParts[2];
+                        var additionParts = lineParts[3].split("/");
+                        var charactersToAdd = additionParts[0];
+                        if (charactersToAdd === "0")
+                            charactersToAdd = "";
+                        var continuationClasses = this.parseRuleCodes(additionParts[1]);
+                        var regexToMatch = lineParts[4];
+                        var entry = {
+                            add: charactersToAdd
+                        };
+                        if (continuationClasses.length > 0)
+                            entry.continuationClasses = continuationClasses;
+                        if (regexToMatch !== ".") {
+                            if (ruleType === "SFX") {
+                                entry.match = new RegExp(regexToMatch + "$");
+                            }
+                            else {
+                                entry.match = new RegExp("^" + regexToMatch);
+                            }
+                        }
+                        if (charactersToRemove != "0") {
+                            if (ruleType === "SFX") {
+                                entry.remove = new RegExp(charactersToRemove + "$");
+                            }
+                            else {
+                                entry.remove = charactersToRemove;
+                            }
+                        }
+                        entries.push(entry);
+                    }
+                    rules[ruleCode] = { "type": ruleType, "combineable": (combineable === "Y"), "entries": entries };
+                    i += numEntries;
+                }
+                else if (ruleType === "COMPOUNDRULE") {
+                    numEntries = parseInt(definitionParts[1], 10);
+                    for (j = i + 1, _jlen = i + 1 + numEntries; j < _jlen; j++) {
+                        line = lines[j];
+                        lineParts = line.split(/\s+/);
+                        this.compoundRules.push(lineParts[1]);
+                    }
+                    i += numEntries;
+                }
+                else if (ruleType === "REP") {
+                    lineParts = line.split(/\s+/);
+                    if (lineParts.length === 3) {
+                        this.replacementTable.push([lineParts[1], lineParts[2]]);
+                    }
+                }
+                else {
+                    // ONLYINCOMPOUND
+                    // COMPOUNDMIN
+                    // FLAG
+                    // KEEPCASE
+                    // NEEDAFFIX
+                    this.flags[ruleType] = definitionParts[1];
+                }
+            }
+            return rules;
+        },
+        /**
+         * Removes comments.
+         *
+         * @param {string} data A line from an affix file.
+         * @return {string} The cleaned-up line.
+         */
+        _removeAffixComments: function (line) {
+            // This used to remove any string starting with '#' up to the end of the line,
+            // but some COMPOUNDRULE definitions include '#' as part of the rule.
+            // So, only remove lines that begin with a comment, optionally preceded by whitespace.
+            if (line.match(/^\s*#/)) {
+                return '';
+            }
+            return line;
+        },
+        /**
+         * Parses the words out from the .dic file.
+         *
+         * @param {string} data The data from the dictionary file.
+         * @returns {Map} The lookup table containing all of the words and
+         *                 word forms from the dictionary.
+         */
+        _parseDIC: function (data) {
+            return runGenSync(this._parseDICGen(data));
+        },
+        _parseDICGen: function (data) {
+            function addWord(word, rules) {
+                // Some dictionaries will list the same word multiple times with different rule sets.
+                if (!dictionaryTable.has(word)) {
+                    dictionaryTable.set(word, null);
+                }
+                if (rules.length > 0) {
+                    if (dictionaryTable.get(word) === null) {
+                        dictionaryTable.set(word, []);
+                    }
+                    dictionaryTable.get(word).push(rules);
+                }
+            }
+            var lines, dictionaryTable, i, _len, line, just_word_and_flags, parts, word, ruleCodesArray, j, _jlen, code, rule, newWords, ii, _iilen, newWord, k, combineCode, combineRule, otherNewWords, iii, _iiilen, otherNewWord;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        data = this._removeDicComments(data);
+                        lines = data.split(/\r?\n/);
+                        dictionaryTable = new Map();
+                        i = 1, _len = lines.length;
+                        _a.label = 1;
+                    case 1:
+                        if (!(i < _len)) return [3 /*break*/, 5];
+                        if (!!(i & 63)) return [3 /*break*/, 3];
+                        return [4 /*yield*/];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3:
+                        line = lines[i];
+                        if (!line) {
+                            // Ignore empty lines.
+                            return [3 /*break*/, 4];
+                        }
+                        just_word_and_flags = line.replace(/\s.*$/, '');
+                        parts = just_word_and_flags.split('/', 2);
+                        word = parts[0];
+                        // Now for each affix rule, generate that form of the word.
+                        if (parts.length > 1) {
+                            ruleCodesArray = this.parseRuleCodes(parts[1]);
+                            // Save the ruleCodes for compound word situations.
+                            if (!("NEEDAFFIX" in this.flags) || ruleCodesArray.indexOf(this.flags.NEEDAFFIX) === -1) {
+                                addWord(word, ruleCodesArray);
+                            }
+                            for (j = 0, _jlen = ruleCodesArray.length; j < _jlen; j++) {
+                                code = ruleCodesArray[j];
+                                rule = this.rules[code];
+                                if (rule) {
+                                    newWords = this._applyRule(word, rule);
+                                    for (ii = 0, _iilen = newWords.length; ii < _iilen; ii++) {
+                                        newWord = newWords[ii];
+                                        addWord(newWord, []);
+                                        if (rule.combineable) {
+                                            for (k = j + 1; k < _jlen; k++) {
+                                                combineCode = ruleCodesArray[k];
+                                                combineRule = this.rules[combineCode];
+                                                if (combineRule) {
+                                                    if (combineRule.combineable && (rule.type != combineRule.type)) {
+                                                        otherNewWords = this._applyRule(newWord, combineRule);
+                                                        for (iii = 0, _iiilen = otherNewWords.length; iii < _iiilen; iii++) {
+                                                            otherNewWord = otherNewWords[iii];
+                                                            addWord(otherNewWord, []);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (code in this.compoundRuleCodes) {
+                                    this.compoundRuleCodes[code].push(word);
+                                }
+                            }
+                        }
+                        else {
+                            addWord(word.trim(), []);
+                        }
+                        _a.label = 4;
+                    case 4:
+                        i++;
+                        return [3 /*break*/, 1];
+                    case 5: return [2 /*return*/, dictionaryTable];
+                }
+            });
+        },
+        /**
+         * Removes comment lines and then cleans up blank lines and trailing whitespace.
+         *
+         * @param {string} data The data from a .dic file.
+         * @return {string} The cleaned-up data.
+         */
+        _removeDicComments: function (data) {
+            // I can't find any official documentation on it, but at least the de_DE
+            // dictionary uses tab-indented lines as comments.
+            // Remove comments
+            data = data.replace(/^\t.*$/mg, "");
+            return data;
+        },
+        parseRuleCodes: function (textCodes) {
+            if (!textCodes) {
+                return [];
+            }
+            else if (!("FLAG" in this.flags)) {
+                // The flag symbols are single characters
+                return textCodes.split("");
+            }
+            else if (this.flags.FLAG === "long") {
+                // The flag symbols are two characters long.
+                var flags = [];
+                for (var i = 0, _len = textCodes.length; i < _len; i += 2) {
+                    flags.push(textCodes.substr(i, 2));
+                }
+                return flags;
+            }
+            else if (this.flags.FLAG === "num") {
+                // The flag symbols are a CSV list of numbers.
+                return textCodes.split(",");
+            }
+            else if (this.flags.FLAG === "UTF-8") {
+                // The flags are single UTF-8 characters.
+                // @see https://github.com/cfinke/Typo.js/issues/57
+                return Array.from(textCodes);
+            }
+            else {
+                // It's possible that this fallback case will not work for all FLAG values,
+                // but I think it's more likely to work than not returning anything at all.
+                return textCodes.split("");
+            }
+        },
+        /**
+         * Applies an affix rule to a word.
+         *
+         * @param {string} word The base word.
+         * @param {Object} rule The affix rule.
+         * @returns {string[]} The new words generated by the rule.
+         */
+        _applyRule: function (word, rule) {
+            var entries = rule.entries;
+            var newWords = [];
+            for (var i = 0, _len = entries.length; i < _len; i++) {
+                var entry = entries[i];
+                if (!entry.match || word.match(entry.match)) {
+                    var newWord = word;
+                    if (entry.remove) {
+                        newWord = newWord.replace(entry.remove, "");
+                    }
+                    if (rule.type === "SFX") {
+                        newWord = newWord + entry.add;
+                    }
+                    else {
+                        newWord = entry.add + newWord;
+                    }
+                    newWords.push(newWord);
+                    if ("continuationClasses" in entry) {
+                        for (var j = 0, _jlen = entry.continuationClasses.length; j < _jlen; j++) {
+                            var continuationRule = this.rules[entry.continuationClasses[j]];
+                            if (continuationRule) {
+                                newWords = newWords.concat(this._applyRule(newWord, continuationRule));
+                            }
+                            /*
+                            else {
+                                // This shouldn't happen, but it does, at least in the de_DE dictionary.
+                                // I think the author mistakenly supplied lower-case rule codes instead
+                                // of upper-case.
+                            }
+                            */
+                        }
+                    }
+                }
+            }
+            return newWords;
+        },
+        /**
+         * Checks whether a word or a capitalization variant exists in the current dictionary.
+         * The word is trimmed and several variations of capitalizations are checked.
+         * If you want to check a word without any changes made to it, call checkExact()
+         *
+         * @see http://blog.stevenlevithan.com/archives/faster-trim-javascript re:trimming function
+         *
+         * @param {string} aWord The word to check.
+         * @returns {boolean}
+         */
+        check: function (aWord) {
+            if (!this.loaded) {
+                throw "Dictionary not loaded.";
+            }
+            if (!aWord) {
+                return false;
+            }
+            // Remove leading and trailing whitespace
+            var trimmedWord = aWord.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+            if (this.checkExact(trimmedWord)) {
+                return true;
+            }
+            // The exact word is not in the dictionary.
+            if (trimmedWord.toUpperCase() === trimmedWord) {
+                // The word was supplied in all uppercase.
+                // Check for a capitalized form of the word.
+                var capitalizedWord = trimmedWord[0] + trimmedWord.substring(1).toLowerCase();
+                if (this.hasFlag(capitalizedWord, "KEEPCASE")) {
+                    // Capitalization variants are not allowed for this word.
+                    return false;
+                }
+                if (this.checkExact(capitalizedWord)) {
+                    // The all-caps word is a capitalized word spelled correctly.
+                    return true;
+                }
+                if (this.checkExact(trimmedWord.toLowerCase())) {
+                    // The all-caps is a lowercase word spelled correctly.
+                    return true;
+                }
+            }
+            var uncapitalizedWord = trimmedWord[0].toLowerCase() + trimmedWord.substring(1);
+            if (uncapitalizedWord !== trimmedWord) {
+                if (this.hasFlag(uncapitalizedWord, "KEEPCASE")) {
+                    // Capitalization variants are not allowed for this word.
+                    return false;
+                }
+                // Check for an uncapitalized form
+                if (this.checkExact(uncapitalizedWord)) {
+                    // The word is spelled correctly but with the first letter capitalized.
+                    return true;
+                }
+            }
+            return false;
+        },
+        /**
+         * Checks whether a word exists in the current dictionary.
+         *
+         * @param {string} word The word to check.
+         * @returns {boolean}
+         */
+        checkExact: function (word) {
+            if (!this.loaded) {
+                throw "Dictionary not loaded.";
+            }
+            var ruleCodes = this.dictionaryTable.get(word);
+            var i, _len;
+            if (typeof ruleCodes === 'undefined') {
+                // Check if this might be a compound word.
+                if ("COMPOUNDMIN" in this.flags && word.length >= this.flags.COMPOUNDMIN) {
+                    for (i = 0, _len = this.compoundRules.length; i < _len; i++) {
+                        if (word.match(this.compoundRules[i])) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            else if (ruleCodes === null) {
+                // a null (but not undefined) value for an entry in the dictionary table
+                // means that the word is in the dictionary but has no flags.
+                return true;
+            }
+            else if (typeof ruleCodes === 'object') { // this.dictionary['hasOwnProperty'] will be a function.
+                for (i = 0, _len = ruleCodes.length; i < _len; i++) {
+                    if (!this.hasFlag(word, "ONLYINCOMPOUND", ruleCodes[i])) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        },
+        /**
+         * Looks up whether a given word is flagged with a given flag.
+         *
+         * @param {string} word The word in question.
+         * @param {string} flag The flag in question.
+         * @return {boolean}
+         */
+        hasFlag: function (word, flag, wordFlags) {
+            if (!this.loaded) {
+                throw "Dictionary not loaded.";
+            }
+            if (flag in this.flags) {
+                if (typeof wordFlags === 'undefined') {
+                    wordFlags = Array.prototype.concat.apply([], this.dictionaryTable.get(word));
+                }
+                if (wordFlags && wordFlags.indexOf(this.flags[flag]) !== -1) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        /**
+         * Returns a list of suggestions for a misspelled word.
+         *
+         * @see http://www.norvig.com/spell-correct.html for the basis of this suggestor.
+         * This suggestor is primitive, but it works.
+         *
+         * @param {string} word The misspelling.
+         * @param {number} [limit=5] The maximum number of suggestions to return.
+         * @returns {string[]} The array of suggestions.
+         */
+        alphabet: "",
+        suggest: function (word, limit) {
+            if (!this.loaded) {
+                throw "Dictionary not loaded.";
+            }
+            limit = limit || 5;
+            if (this.memoized.hasOwnProperty(word)) {
+                var memoizedLimit = this.memoized[word]['limit'];
+                // Only return the cached list if it's big enough or if there weren't enough suggestions
+                // to fill a smaller limit.
+                if (limit <= memoizedLimit || this.memoized[word]['suggestions'].length < memoizedLimit) {
+                    return this.memoized[word]['suggestions'].slice(0, limit);
+                }
+            }
+            if (this.check(word))
+                return [];
+            // Check the replacement table.
+            for (var i = 0, _len = this.replacementTable.length; i < _len; i++) {
+                var replacementEntry = this.replacementTable[i];
+                if (word.indexOf(replacementEntry[0]) !== -1) {
+                    var correctedWord = word.replace(replacementEntry[0], replacementEntry[1]);
+                    if (this.check(correctedWord)) {
+                        return [correctedWord];
+                    }
+                }
+            }
+            if (!this.alphabet) {
+                // Use the English alphabet as the default. Problematic, but backwards-compatible.
+                this.alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                // Any characters defined in the affix file as substitutions can go in the alphabet too.
+                // Note that dictionaries do not include the entire alphabet in the TRY flag when it's there.
+                // For example, Q is not in the default English TRY list; that's why having the default
+                // alphabet above is useful.
+                if ('TRY' in this.flags) {
+                    this.alphabet += this.flags['TRY'];
+                }
+                // Plus any additional characters specifically defined as being allowed in words.
+                if ('WORDCHARS' in this.flags) {
+                    this.alphabet += this.flags['WORDCHARS'];
+                }
+                // Remove any duplicates.
+                var alphaArray = this.alphabet.split("");
+                alphaArray.sort();
+                var alphaHash = {};
+                for (var i = 0; i < alphaArray.length; i++) {
+                    alphaHash[alphaArray[i]] = true;
+                }
+                this.alphabet = '';
+                for (var i in alphaHash) {
+                    this.alphabet += i;
+                }
+            }
+            var self = this;
+            /**
+             * Returns a hash keyed by all of the strings that can be made by making a single edit to the word (or words in) `words`
+             * The value of each entry is the number of unique ways that the resulting word can be made.
+             *
+             * @arg HashMap words A hash keyed by words (all with the value `true` to make lookups very quick).
+             * @arg boolean known_only Whether this function should ignore strings that are not in the dictionary.
+             */
+            function edits1(words, known_only) {
+                var rv = {};
+                var i, j, _iilen, _len, _jlen, _edit;
+                var alphabetLength = self.alphabet.length;
+                for (var word_1 in words) {
+                    for (i = 0, _len = word_1.length + 1; i < _len; i++) {
+                        var s = [word_1.substring(0, i), word_1.substring(i)];
+                        // Remove a letter.
+                        if (s[1]) {
+                            _edit = s[0] + s[1].substring(1);
+                            if (!known_only || self.check(_edit)) {
+                                if (!(_edit in rv)) {
+                                    rv[_edit] = 1;
+                                }
+                                else {
+                                    rv[_edit] += 1;
+                                }
+                            }
+                        }
+                        // Transpose letters
+                        // Eliminate transpositions of identical letters
+                        if (s[1].length > 1 && s[1][1] !== s[1][0]) {
+                            _edit = s[0] + s[1][1] + s[1][0] + s[1].substring(2);
+                            if (!known_only || self.check(_edit)) {
+                                if (!(_edit in rv)) {
+                                    rv[_edit] = 1;
+                                }
+                                else {
+                                    rv[_edit] += 1;
+                                }
+                            }
+                        }
+                        if (s[1]) {
+                            // Replace a letter with another letter.
+                            var lettercase = (s[1].substring(0, 1).toUpperCase() === s[1].substring(0, 1)) ? 'uppercase' : 'lowercase';
+                            for (j = 0; j < alphabetLength; j++) {
+                                var replacementLetter = self.alphabet[j];
+                                // Set the case of the replacement letter to the same as the letter being replaced.
+                                if ('uppercase' === lettercase) {
+                                    replacementLetter = replacementLetter.toUpperCase();
+                                }
+                                // Eliminate replacement of a letter by itself
+                                if (replacementLetter != s[1].substring(0, 1)) {
+                                    _edit = s[0] + replacementLetter + s[1].substring(1);
+                                    if (!known_only || self.check(_edit)) {
+                                        if (!(_edit in rv)) {
+                                            rv[_edit] = 1;
+                                        }
+                                        else {
+                                            rv[_edit] += 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (s[1]) {
+                            // Add a letter between each letter.
+                            for (j = 0; j < alphabetLength; j++) {
+                                // If the letters on each side are capitalized, capitalize the replacement.
+                                var lettercase = (s[0].substring(-1).toUpperCase() === s[0].substring(-1) && s[1].substring(0, 1).toUpperCase() === s[1].substring(0, 1)) ? 'uppercase' : 'lowercase';
+                                var replacementLetter = self.alphabet[j];
+                                if ('uppercase' === lettercase) {
+                                    replacementLetter = replacementLetter.toUpperCase();
+                                }
+                                _edit = s[0] + replacementLetter + s[1];
+                                if (!known_only || self.check(_edit)) {
+                                    if (!(_edit in rv)) {
+                                        rv[_edit] = 1;
+                                    }
+                                    else {
+                                        rv[_edit] += 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return rv;
+            }
+            function correct(word) {
+                var _a;
+                // Get the edit-distance-1 and edit-distance-2 forms of this word.
+                var ed1 = edits1((_a = {}, _a[word] = true, _a));
+                var ed2 = edits1(ed1, true);
+                // Sort the edits based on how many different ways they were created.
+                var weighted_corrections = ed2;
+                for (var ed1word in ed1) {
+                    if (!self.check(ed1word)) {
+                        continue;
+                    }
+                    if (ed1word in weighted_corrections) {
+                        weighted_corrections[ed1word] += ed1[ed1word];
+                    }
+                    else {
+                        weighted_corrections[ed1word] = ed1[ed1word];
+                    }
+                }
+                var i, _len;
+                var sorted_corrections = [];
+                for (i in weighted_corrections) {
+                    if (weighted_corrections.hasOwnProperty(i)) {
+                        if (self.hasFlag(i, "PRIORITYSUGGEST")) {
+                            // We've defined a new affix rule called PRIORITYSUGGEST, indicating that
+                            // if this word is in the suggestions list for a misspelled word, it should
+                            // be given priority over other suggestions.
+                            //
+                            // Add a large number to its weight to push it to the top of the list.
+                            // If multiple priority suggestions are in the list, they'll still be ranked
+                            // against each other, but they'll all be above non-priority suggestions.
+                            weighted_corrections[i] += 1000;
+                        }
+                        sorted_corrections.push([i, weighted_corrections[i]]);
+                    }
+                }
+                function sorter(a, b) {
+                    var a_val = a[1];
+                    var b_val = b[1];
+                    if (a_val < b_val) {
+                        return -1;
+                    }
+                    else if (a_val > b_val) {
+                        return 1;
+                    }
+                    // @todo If a and b are equally weighted, add our own weight based on something like the key locations on this language's default keyboard.
+                    return b[0].localeCompare(a[0]);
+                }
+                sorted_corrections.sort(sorter).reverse();
+                var rv = [];
+                var capitalization_scheme = "lowercase";
+                if (word.toUpperCase() === word) {
+                    capitalization_scheme = "uppercase";
+                }
+                else if (word.substr(0, 1).toUpperCase() + word.substr(1).toLowerCase() === word) {
+                    capitalization_scheme = "capitalized";
+                }
+                var working_limit = limit;
+                for (i = 0; i < Math.min(working_limit, sorted_corrections.length); i++) {
+                    if ("uppercase" === capitalization_scheme) {
+                        sorted_corrections[i][0] = sorted_corrections[i][0].toUpperCase();
+                    }
+                    else if ("capitalized" === capitalization_scheme) {
+                        sorted_corrections[i][0] = sorted_corrections[i][0].substr(0, 1).toUpperCase() + sorted_corrections[i][0].substr(1);
+                    }
+                    if (!self.hasFlag(sorted_corrections[i][0], "NOSUGGEST") && rv.indexOf(sorted_corrections[i][0]) === -1) {
+                        rv.push(sorted_corrections[i][0]);
+                    }
+                    else {
+                        // If one of the corrections is not eligible as a suggestion , make sure we still return the right number of suggestions.
+                        working_limit++;
+                    }
+                }
+                return rv;
+            }
+            this.memoized[word] = {
+                'suggestions': correct(word),
+                'limit': limit
+            };
+            return this.memoized[word]['suggestions'];
+        }
+    };
+})();
+// Support for use as a node.js module.
+if (typeof module !== 'undefined') {
+    module.exports = Typo;
+}
+
+</script>
 <script>
 (() => {
   const TYPES = ['scene','action','character','paren','dialogue','transition','shot','note'];
@@ -495,7 +1496,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     setRuns(b, runsFrom(text, fmt));
     return b;
   }
-  const serialBlock = b => { const r = readRuns(b); return [b.dataset.type, runsText(r), b.dataset.manual ? 1 : 0, fmtOf(r), b.dataset.dual ? 1 : 0]; };
+  const altsOf = b => { try { return b.dataset.alts ? JSON.parse(b.dataset.alts) : 0; } catch (e) { return 0; } };
+  const serialBlock = b => { const r = readRuns(b); return [b.dataset.type, runsText(r), b.dataset.manual ? 1 : 0, fmtOf(r), b.dataset.dual ? 1 : 0, +b.dataset.color || 0, altsOf(b)]; };
 
   /* ---------- caret ---------- */
   let savedRange = null;
@@ -622,7 +1624,13 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   }
   function scheduleCommit() { clearTimeout(commitTimer); commitTimer = setTimeout(commitNow, 800); }
   function render(bl) {
-    editor.replaceChildren(...bl.map(([t, x, m, f, dd]) => { const b = makeBlock(t, x, m, f); if (dd && t === 'character') b.dataset.dual = '1'; return b; }));
+    editor.replaceChildren(...bl.map(([t, x, m, f, dd, col, alts]) => {
+      const b = makeBlock(t, x, m, f);
+      if (dd && t === 'character') b.dataset.dual = '1';
+      if (col && t === 'scene') b.dataset.color = String(col);
+      if (Array.isArray(alts) && alts.length) b.dataset.alts = JSON.stringify(alts);
+      return b;
+    }));
     if (!editor.children.length) editor.append(makeBlock('scene', ''));
     schedulePaginate();
   }
@@ -780,13 +1788,17 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 
   /* ---------- saving on this device ---------- */
   let saveTimer = null, changeSeq = 0;
-  let doc = {fileId:null, rev:null, dirty:false};
+  const newKey = () => 'local-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  let doc = {fileId:null, rev:null, dirty:false, key:newKey()};
   // a file's content revision: changes only when the script itself changes
   const revOf = m => String(m.headRevisionId || m.modifiedTime || '');
   const setStatus = s => { statusEl.textContent = s; };
   const TP_DEFAULT = () => ({credit:'Written by', author:'', source:'', contact:'', draft:''});
   let titlePage = TP_DEFAULT();
-  let settings = {sceneNumbers:false}, drafts = [];
+  const PAPER_KEY = 'script-editor:paper';
+  const defaultPaper = () => { try { return localStorage.getItem(PAPER_KEY) === 'letter' ? 'letter' : 'a4'; } catch (e) { return 'a4'; } };
+  const freshSettings = () => ({sceneNumbers:false, paper:defaultPaper()});
+  let settings = freshSettings(), drafts = [];
   const currentData = () => ({app:'script-editor', v:1, title:titleEl.value, titlePage:{...titlePage}, settings:{...settings}, drafts,
     blocks:blocks().map(serialBlock)});
   const hasContent = d => !!(d.title.trim() || d.blocks.some(b => b[1].trim()));
@@ -796,9 +1808,38 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, 500);
     scheduleDrive();
   }
+  // every script you work on is also kept in this device's library, so it can be opened offline
+  const LIB = (() => {
+    let dbp = null;
+    const open = () => dbp || (dbp = new Promise((res, rej) => {
+      const r = indexedDB.open('script-editor', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('scripts', {keyPath:'key'});
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    }));
+    const tx = async (mode, fn) => {
+      const db = await open();
+      return new Promise((res, rej) => {
+        const t = db.transaction('scripts', mode), req = fn(t.objectStore('scripts'));
+        t.oncomplete = () => res(req && 'result' in req ? req.result : undefined);
+        t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+      });
+    };
+    return {put:rec => tx('readwrite', st => st.put(rec)), get:key => tx('readonly', st => st.get(key)),
+      all:() => tx('readonly', st => st.getAll()), del:key => tx('readwrite', st => st.delete(key)), clear:() => tx('readwrite', st => st.clear())};
+  })();
+  let libWrite = Promise.resolve(), libOk = false;
+  function saveToLibrary(d) {
+    if (doc.fileId && doc.key !== 'drive-' + doc.fileId) {          // first time this script reached Drive
+      const old = doc.key; doc.key = 'drive-' + doc.fileId; LIB.del(old).catch(() => {});
+    }
+    if (!hasContent(d) && !doc.fileId) return;
+    const rec = {key:doc.key, fileId:doc.fileId, rev:doc.rev, dirty:doc.dirty, title:d.title, savedAt:Date.now(), data:d};
+    libWrite = libWrite.then(() => LIB.put(rec)).then(() => { libOk = true; }, () => { libOk = false; });
+  }
   function saveLocal() {
     clearTimeout(saveTimer);
     const d = currentData();
+    saveToLibrary(d);
     const data = {v:1, title:d.title, titlePage:d.titlePage, settings:d.settings, drafts:d.drafts, blocks:d.blocks, doc, savedAt:Date.now()};
     try { localStorage.setItem(KEY, JSON.stringify(data)); if (driveState !== 'on') setStatus('Saved on this device'); }
     catch (e) { if (driveState !== 'on') setStatus('Not saved: this browser blocks storage'); }
@@ -927,16 +1968,16 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     if (!c.ok) throw new Error('Drive ' + c.status);
     return (folderCache = (await c.json()).id);
   }
-  async function upload(data) {
+  async function upload(data, fileId = doc.fileId) {
     const name = (data.title.trim() || 'Untitled script') + '.script.json';
-    const metadata = doc.fileId ? {name}
+    const metadata = fileId ? {name}
       : {name, mimeType:'application/json', parents:[await folderId()], appProperties:{scriptEditor:'1'}};
     const boundary = 'se' + Math.random().toString(36).slice(2);
     const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
                  `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(data)}\r\n--${boundary}--`;
     const fields = 'fields=id,name,headRevisionId,modifiedTime';
-    const url = doc.fileId ? `${UP}/files/${doc.fileId}?uploadType=multipart&${fields}` : `${UP}/files?uploadType=multipart&${fields}`;
-    const r = await api(url, {method:doc.fileId ? 'PATCH' : 'POST', headers:{'Content-Type':`multipart/related; boundary=${boundary}`}, body});
+    const url = fileId ? `${UP}/files/${fileId}?uploadType=multipart&${fields}` : `${UP}/files?uploadType=multipart&${fields}`;
+    const r = await api(url, {method:fileId ? 'PATCH' : 'POST', headers:{'Content-Type':`multipart/related; boundary=${boundary}`}, body});
     if (!r.ok) throw new Error('Drive ' + r.status);
     return r.json();
   }
@@ -989,16 +2030,62 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     else { await checkRemote(true); if (!conflict && driveState === 'on') setStatus(doc.fileId ? 'Saved to Drive' : 'Connected to Drive'); }
   }
   async function flushCurrent() {
-    if (driveState === 'on' && doc.dirty) await saveToDrive(true);
-    return !(doc.dirty && hasContent(currentData()));
+    saveLocal();
+    await libWrite;
+    if (driveState === 'on' && doc.dirty && navigator.onLine) await saveToDrive(true);
+    return libOk || !(doc.dirty && hasContent(currentData()));
+  }
+  function loadLocalRec(rec) {
+    const d = rec.data;
+    titleEl.value = d.title || '';
+    titlePage = {...TP_DEFAULT(), ...(d.titlePage || {})};
+    settings = {...freshSettings(), ...(d.settings || {})}; drafts = Array.isArray(d.drafts) ? d.drafts : [];
+    render(d.blocks); renderTpCard();
+    doc = {fileId:rec.fileId || null, rev:rec.rev || null, dirty:!!rec.dirty, key:rec.key};
+    resetHistory(); refreshUI(); saveLocal(); pageScrollTop();
+    if (doc.dirty) scheduleDrive();
+  }
+  async function openLocal(key) {
+    if (key === doc.key) { closePicker(); return; }
+    pickerList.replaceChildren(pickerMsg('Opening…'));
+    await flushCurrent();
+    if (conflict) { closePicker(); return; }
+    const rec = await LIB.get(key).catch(() => null);
+    if (!rec) { pickerList.replaceChildren(pickerMsg('That script isn’t on this device any more.')); return; }
+    loadLocalRec(rec); closePicker();
+    setStatus(rec.dirty || !rec.fileId ? 'Opened from this device' : 'Saved to Drive');
+  }
+  // scripts changed while offline go up to Drive once you're back online
+  let syncingPending = false;
+  async function syncPending() {
+    if (syncingPending || driveState !== 'on' || !navigator.onLine) return;
+    syncingPending = true;
+    let n = 0;
+    try {
+      for (const rec of await LIB.all()) {
+        if (!rec.dirty || rec.key === doc.key || !hasContent(rec.data)) continue;
+        let d = rec.data, fileId = rec.fileId;
+        if (fileId) {
+          const m = await getMeta(fileId);
+          if (!m) fileId = null;
+          else if (rec.rev && revOf(m) !== rec.rev) { d = {...d, title:(d.title || 'Untitled script') + ' (offline copy)'}; fileId = null; }  // changed elsewhere too: keep both
+        }
+        const meta = await upload(d, fileId);
+        await LIB.del(rec.key);
+        await LIB.put({...rec, key:'drive-' + meta.id, fileId:meta.id, rev:revOf(meta), dirty:false, title:d.title, data:d});
+        n++;
+      }
+      if (n) setStatus(`${n} ${n === 1 ? 'script' : 'scripts'} from this device saved to Drive`);
+    } catch (e) { handleErr(e); }
+    finally { syncingPending = false; }
   }
   function loadDoc(meta, data, keepHistory) {
     if (keepHistory) commitNow();
     titleEl.value = data.title || '';
     titlePage = {...TP_DEFAULT(), ...(data.titlePage || {})};
-    settings = {sceneNumbers:false, ...(data.settings || {})}; drafts = Array.isArray(data.drafts) ? data.drafts : [];
+    settings = {...freshSettings(), ...(data.settings || {})}; drafts = Array.isArray(data.drafts) ? data.drafts : [];
     render(data.blocks); renderTpCard();
-    doc = {fileId:meta.id, rev:revOf(meta), dirty:false};
+    doc = {fileId:meta.id, rev:revOf(meta), dirty:false, key:'drive-' + meta.id};
     if (keepHistory) { commitNow(); updateUndo(); } else resetHistory();
     if (document.activeElement === editor) setCaret(editor.firstElementChild, 0);
     refreshUI(); saveLocal();
@@ -1024,7 +2111,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     getToken().then(() => {
       driveState = 'on';
       try { localStorage.setItem(CONN_KEY, '1'); } catch (e) {}
-      updateDriveUI(); syncNow();
+      updateDriveUI(); syncNow().then(syncPending);
     }).catch(e => {
       if (e && e.notReady) setStatus('Google sign-in is still loading. Try again in a moment');
       else if (e && e.denied) setStatus('Drive access wasn’t allowed. Tap Connect and tick the Drive box');
@@ -1070,7 +2157,13 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   }
   async function disconnect() {
     pickerList.replaceChildren(pickerMsg('Saving before you disconnect…'));
-    if (!(await flushCurrent())) {
+    await syncPending();
+    const waiting = (await LIB.all().catch(() => [])).filter(r => r.dirty && r.key !== doc.key && hasContent(r.data));
+    if (waiting.length) {
+      pickerList.replaceChildren(pickerMsg(`${waiting.length} ${waiting.length === 1 ? 'script on this device hasn’t' : 'scripts on this device haven’t'} reached Drive yet, so you’re still connected. Try again when you’re online.`));
+      return;
+    }
+    if (!(await flushCurrent()) || (doc.dirty && hasContent(currentData()))) {
       pickerList.replaceChildren(pickerMsg('Couldn’t save the current script to Drive, so you’re still connected. Check your connection and try again.'));
       return;
     }
@@ -1079,19 +2172,35 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     token = null; tokenExp = 0; folderCache = null;
     try { sessionStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(ACCT_KEY); localStorage.removeItem(CONN_KEY); localStorage.removeItem(HINT_KEY); } catch (e) {}
     driveState = 'off'; updateDriveUI();
+    LIB.clear().catch(() => {});
     // clear this device's copy so nothing from this account is saved into the next one
-    render([['scene', '', 0]]); titleEl.value = ''; titlePage = TP_DEFAULT(); settings = {sceneNumbers:false}; drafts = []; renderTpCard();
-    doc = {fileId:null, rev:null, dirty:false};
+    render([['scene', '', 0]]); titleEl.value = ''; titlePage = TP_DEFAULT(); settings = freshSettings(); drafts = []; renderTpCard();
+    doc = {fileId:null, rev:null, dirty:false, key:newKey()};
     resetHistory(); refreshUI(); saveLocal();
     closePicker(); pageScrollTop();
     setStatus('Disconnected from Drive');
   }
   document.getElementById('disconnect').addEventListener('click', disconnect);
+  function localRow(rec, note) {
+    const b = document.createElement('button');
+    b.className = 'item' + (rec.key === doc.key ? ' current' : '');
+    const n = document.createElement('span'); n.textContent = (rec.title || '').trim() || 'Untitled script';
+    const d = document.createElement('small');
+    d.textContent = rec.key === doc.key ? 'Open now' : (note || ((rec.dirty || !rec.fileId) ? 'Not in Drive yet · ' : '') + fmtDate(rec.savedAt));
+    b.append(n, d);
+    b.addEventListener('click', () => openLocal(rec.key));
+    return b;
+  }
   async function openPicker() {
     picker.hidden = false;
     showAccount();
-    if (driveState !== 'on') {
-      pickerList.replaceChildren(pickerMsg('Connect Drive to see your saved scripts here. You can still import a file.'));
+    saveLocal(); await libWrite;
+    const local = (await LIB.all().catch(() => [])).sort((a, b) => b.savedAt - a.savedAt);
+    if (driveState !== 'on' || !navigator.onLine) {
+      const msg = !navigator.onLine
+        ? 'You’re offline. These scripts are saved on this device, and changes go to Drive when you’re back online.'
+        : 'Connect Drive to see all your scripts. These are saved on this device. You can still import a file.';
+      pickerList.replaceChildren(pickerMsg(msg), ...(local.length ? local.map(r => localRow(r)) : [pickerMsg('No scripts on this device yet.')]));
       return;
     }
     pickerList.replaceChildren(pickerMsg('Loading your scripts…'));
@@ -1100,8 +2209,12 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       const r = await api(`${API}/files?q=${q}&orderBy=${encodeURIComponent('modifiedTime desc')}&pageSize=100&fields=files(id,name,modifiedTime)`);
       if (!r.ok) throw new Error('Drive ' + r.status);
       const files = (await r.json()).files || [];
-      if (!files.length) { pickerList.replaceChildren(pickerMsg('No scripts in Drive yet. Anything you write is saved there automatically.')); return; }
-      pickerList.replaceChildren(...files.map(f => {
+      const byFile = new Map(local.filter(r => r.fileId).map(r => [r.fileId, r]));
+      const onlyHere = local.filter(r => !r.fileId || !files.some(f => f.id === r.fileId)).filter(r => r.dirty || !r.fileId);
+      if (!files.length && !onlyHere.length) { pickerList.replaceChildren(pickerMsg('No scripts in Drive yet. Anything you write is saved there automatically.')); return; }
+      pickerList.replaceChildren(...(onlyHere.length ? [pickerMsg('On this device, not in Drive yet:'), ...onlyHere.map(r => localRow(r)), pickerMsg('In Drive:')] : []), ...files.map(f => {
+        const lr = byFile.get(f.id);
+        if (lr && lr.dirty && lr.key !== doc.key) return localRow(lr, 'Changes not in Drive yet');   // open the newer copy on this device
         const b = document.createElement('button');
         b.className = 'item' + (f.id === doc.fileId ? ' current' : '');
         const n = document.createElement('span'); n.textContent = f.name.replace(/\.script\.json$/, '');
@@ -1252,28 +2365,29 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       else if (d && Array.isArray(d.lines)) s = fromWriterDuet(d);
     }
     if (!s || !s.blocks.length) { setStatus('Couldn’t find a script in that file'); return; }
-    if (driveState === 'reconnect' && doc.dirty && hasContent(currentData())) {
-      setStatus('Reconnect Drive first so the current script is saved'); return;
-    }
-    if (driveState === 'on' && !(await flushCurrent())) {
-      setStatus('Current script isn’t in Drive yet. Try again in a moment'); return;
-    }
+    // the current script is kept on this device (and goes to Drive when it can), so it's safe to move on
+    if (!(await flushCurrent())) { setStatus('Couldn’t save the current script on this device. Try again'); return; }
     const linked = !!doc.fileId;
     commitNow();
     titleEl.value = s.title || file.name.replace(/\.(json|fdx|fountain|spmd|txt)$/i, '');
     render(s.blocks);
     titlePage = {...TP_DEFAULT(), ...(s.titlePage || {})};
-    settings = {sceneNumbers:false, ...(s.settings || {})}; drafts = Array.isArray(s.drafts) ? s.drafts : [];
+    settings = {...freshSettings(), ...(s.settings || {})}; drafts = Array.isArray(s.drafts) ? s.drafts : [];
     renderTpCard();
-    doc = {fileId:null, rev:null, dirty:false};
+    doc = {fileId:null, rev:null, dirty:false, key:newKey()};
     if (linked) resetHistory(); else commitNow();
     refreshUI(); pageScrollTop();
     scheduleSave();
   }
   /* ---------- pages: A4, Courier 12, industry layout ---------- */
   const PAGE = {w:595.28, h:841.89, left:108, top:72, lines:57, cols:57, cw:7.2, lh:12};
+  const PAPERS = {a4:{w:595.28, h:841.89, lines:57, cols:57}, letter:{w:612, h:792, lines:54, cols:60}};
   const SPEC = {scene:{x:0, w:57}, action:{x:0, w:57}, shot:{x:0, w:57}, character:{x:22, w:35},
     dialogue:{x:10, w:35}, paren:{x:16, w:23}, transition:{x:0, w:57, align:'right'}};
+  function applyPaper(p) {
+    Object.assign(PAGE, PAPERS[p] || PAPERS.a4);
+    SPEC.scene.w = SPEC.action.w = SPEC.shot.w = SPEC.transition.w = PAGE.cols;
+  }
   const SPACE_BEFORE = {scene:1, action:1, shot:1, character:1, transition:1};
   const ENDS_SENTENCE = /[.!?…]["'’”)\]]*$/;
   function wrapRanges(text, width) {
@@ -1298,7 +2412,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   }
   const speakerOf = name => name.replace(/\s*\([^)]*\)/g, '').trim().toUpperCase();
   // Turn the script into printable items; also returns which character lines get an automatic (CONT'D)
-  function layoutScript(bl) {
+  function layoutScript(bl, paper) {
+    applyPaper(paper || settings.paper);
     const items = [], contd = new Set(), sceneNos = new Map(), dualRanges = [];
     let last = null, sceneNo = 0;
     for (let i = 0; i < bl.length; i++) {
@@ -1453,6 +2568,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     });
     const byUse = m => [...m.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0]);
     known = {names:byUse(nm), locs:byUse(lc), times:byUse(tm)};
+    if (spell.ready) scheduleSpell(200);
     const first = new Map();
     starts.forEach((bi, p) => { if (!first.has(bi)) first.set(bi, p + 2); });
     els.forEach((b, i) => {
@@ -1518,7 +2634,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     return lines;
   }
   function buildPdf(d) {
-    const {items} = layoutScript(d.blocks);
+    const {items} = layoutScript(d.blocks, d.settings && d.settings.paper);
     const {pages} = paginate(items);
     const tp = d.titlePage || {};
     const streams = [];
@@ -1704,13 +2820,14 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     try {
       const r = await api(`${API}/files/${f.id}?fields=id,trashed`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})});
       if (!r.ok) throw new Error('Drive ' + r.status);
+      LIB.del('drive-' + f.id).catch(() => {});
       if (f.id === doc.fileId) {
         // the open script was deleted: start a fresh one so it isn't saved back to Drive
         clearTimeout(driveTimer);
         render([['scene', '', 0]]); titleEl.value = '';
         titlePage = {...TP_DEFAULT(), credit:titlePage.credit, author:titlePage.author, contact:titlePage.contact};
-        settings = {sceneNumbers:false}; drafts = []; renderTpCard();
-        doc = {fileId:null, rev:null, dirty:false};
+        settings = freshSettings(); drafts = []; renderTpCard();
+        doc = {fileId:null, rev:null, dirty:false, key:newKey()};
         resetHistory(); refreshUI(); saveLocal(); pageScrollTop();
       }
       setStatus(`Moved “${name}” to the Drive bin`);
@@ -1727,7 +2844,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   document.getElementById('closePicker').addEventListener('click', closePicker);
   picker.addEventListener('click', e => { if (e.target === picker) closePicker(); });
 
-  window.addEventListener('online', () => { if (driveState === 'on') { if (doc.dirty) saveToDrive(true); else checkRemote(true); } });
+  window.addEventListener('online', () => { if (driveState === 'on') { (doc.dirty ? saveToDrive(true) : checkRemote(true)).then(syncPending); } });
+  window.addEventListener('offline', () => setStatus('Offline: saved on this device'));
   window.addEventListener('focus', () => checkRemote());
 
   /* ---------- autocomplete ---------- */
@@ -1824,6 +2942,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   panel.addEventListener('click', e => { if (e.target === panel) closePanel(); });
   document.getElementById('toolsBtn').addEventListener('click', () => {
     document.getElementById('snState').textContent = settings.sceneNumbers ? 'On' : 'Off';
+    document.getElementById('paperState').textContent = settings.paper === 'letter' ? 'US Letter' : 'A4';
+    document.getElementById('spellState').textContent = spellOn() ? (spell.ready ? 'On' : 'On, loading') : 'Off';
     toolsSheet.hidden = false;
   });
   document.getElementById('toolsClose').addEventListener('click', () => { toolsSheet.hidden = true; });
@@ -1927,6 +3047,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   });
 
   /* ---------- scenes ---------- */
+  const COLOUR_NAMES = ['Red', 'Orange', 'Yellow', 'Green', 'Teal', 'Blue', 'Purple', 'Grey'];
   function sceneList() {
     const els = blocks(), out = [];
     els.forEach((b, i) => { if (b.dataset.type === 'scene' && txt(b).trim()) out.push({i, b}); });
@@ -1939,11 +3060,30 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     const rows = list.map((sc, k) => {
       const go = el('button', {className:'item'}, el('span', {textContent:`${sc.no}. ${txt(sc.b)}`}), el('small', {textContent:'p. ' + (lastLayout.pageOf.get(sc.i) || 1)}));
       go.addEventListener('click', () => jumpTo(sc.b));
+      const dot = el('button', {className:'swatch' + (sc.b.dataset.color ? '' : ' none'), title:'Scene colour', ariaLabel:'Choose a colour for this scene'});
+      if (sc.b.dataset.color) dot.dataset.color = sc.b.dataset.color;
+      dot.addEventListener('click', () => {
+        const open = panelBody.querySelector('.palette');
+        if (open) { const was = open.dataset.for; open.remove(); if (was === String(k)) return; }
+        const pal = el('div', {className:'palette'});
+        pal.dataset.for = String(k);
+        for (let c = 0; c <= 8; c++) {
+          const sw = el('button', {className:'swatch' + (c ? '' : ' none'), ariaLabel:c ? COLOUR_NAMES[c - 1] : 'No colour', title:c ? COLOUR_NAMES[c - 1] : 'No colour'});
+          if (c) sw.dataset.color = String(c);
+          sw.setAttribute('aria-pressed', String((+sc.b.dataset.color || 0) === c));
+          sw.addEventListener('click', () => {
+            toolEdit(() => { if (c) sc.b.dataset.color = String(c); else delete sc.b.dataset.color; });
+            showScenes();
+          });
+          pal.append(sw);
+        }
+        dot.closest('.scene-row').after(pal);
+      });
       const up = el('button', {className:'icon', title:'Move up', ariaLabel:'Move scene up', disabled:k === 0, innerHTML:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>'});
       const dn = el('button', {className:'icon', title:'Move down', ariaLabel:'Move scene down', disabled:k === list.length - 1, innerHTML:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>'});
       up.addEventListener('click', () => moveScene(k, -1));
       dn.addEventListener('click', () => moveScene(k, 1));
-      return el('div', {className:'scene-row'}, go, up, dn);
+      return el('div', {className:'scene-row'}, dot, go, up, dn);
     });
     openPanel('Scenes', el('p', {textContent:'Tap a scene to go to it. Use the arrows to move a scene, with everything in it.'}), ...rows);
   }
@@ -2077,6 +3217,269 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       back, added + removed ? view : el('p', {textContent:'No differences.'}));
   }
 
+  /* ---------- spelling: British English dictionary plus your own words ---------- */
+  const SPELL_KEY = 'script-editor:spell', DICT_KEY = 'script-editor:dictionary';
+  const spell = {ready:false, failed:false, typo:null, cache:new Map(), timer:null, misses:[]};
+  const hasHL = !!(window.CSS && CSS.highlights && window.Highlight);
+  const spellOn = () => { try { return localStorage.getItem(SPELL_KEY) !== 'off'; } catch (e) { return true; } };
+  let myWords = new Set();
+  try { myWords = new Set(JSON.parse(localStorage.getItem(DICT_KEY) || '[]')); } catch (e) {}
+  const saveWords = () => { try { localStorage.setItem(DICT_KEY, JSON.stringify([...myWords].sort())); } catch (e) {} spell.cache.clear(); };
+  const ignoredNow = new Set();
+  async function loadSpell() {
+    if (spell.ready || spell.failed || !spellOn() || !hasHL || typeof Typo !== 'function') return;
+    try {
+      const [aff, dic] = await Promise.all(['en_GB.aff', 'en_GB.dic'].map(f => fetch(f).then(r => { if (!r.ok) throw new Error(f); return r.text(); })));
+      spell.typo = new Typo('en_GB', aff, dic);
+      spell.ready = true;
+      editor.spellcheck = false;            // our checker takes over, so you don't get two sets of underlines
+      scheduleSpell(0);
+    } catch (e) { spell.failed = true; }    // dictionary files missing: Safari's own spell check stays on
+  }
+  const WORD_RE = /[A-Za-z\u00C0-\u024F]+(?:['’][A-Za-z\u00C0-\u024F]+)*/g;
+  function wordOk(w) {
+    if (w.length < 2) return true;
+    const k = w.replace(/’/g, "'");
+    if (myWords.has(k.toLowerCase()) || ignoredNow.has(k.toLowerCase())) return true;
+    if (known.names.includes(k.toUpperCase())) return true;          // character names never count as mistakes
+    if (spell.cache.has(k)) return spell.cache.get(k);
+    let ok = spell.typo.check(k);
+    if (!ok && /'s$/i.test(k)) ok = spell.typo.check(k.slice(0, -2)) || known.names.includes(k.slice(0, -2).toUpperCase());
+    if (!ok && k === k.toUpperCase()) ok = spell.typo.check(k.charAt(0) + k.slice(1).toLowerCase()) || spell.typo.check(k.toLowerCase());
+    spell.cache.set(k, ok);
+    return ok;
+  }
+  function scheduleSpell(ms = 700) { clearTimeout(spell.timer); spell.timer = setTimeout(runSpell, ms); }
+  function runSpell() {
+    if (!spell.ready || !spellOn()) { if (hasHL) CSS.highlights.delete('spell'); spell.misses = []; return; }
+    const ci = caretInfo(), ranges = [], misses = [];
+    for (const b of blocks()) {
+      const t = txt(b);
+      for (const m of t.matchAll(WORD_RE)) {
+        const s0 = m.index, e0 = s0 + m[0].length;
+        if (ci && ci.collapsed && ci.block === b && ci.off >= s0 && ci.off <= e0) continue;   // still typing this word
+        if (wordOk(m[0])) continue;
+        const r = document.createRange();
+        r.setStart(...nodeAt(b, s0)); r.setEnd(...nodeAt(b, e0));
+        ranges.push(r); misses.push({b, s:s0, e:e0, w:m[0]});
+      }
+    }
+    spell.misses = misses;
+    CSS.highlights.set('spell', new Highlight(...ranges));
+  }
+  // tap or click a misspelt word to see suggestions
+  const spellPop = document.getElementById('spellPop');
+  let spellTarget = null;
+  function hideSpellPop() { spellPop.hidden = true; spellTarget = null; }
+  editor.addEventListener('click', () => setTimeout(() => {
+    const ci = caretInfo();
+    if (!ci || !ci.collapsed || !spell.ready) return hideSpellPop();
+    const m = spell.misses.find(x => x.b === ci.block && ci.off >= x.s && ci.off <= x.e && txt(x.b).slice(x.s, x.e) === x.w);
+    if (!m) return hideSpellPop();
+    showSpellPop(m);
+  }, 0));
+  function showSpellPop(m) {
+    hideSuggest();
+    spellTarget = m;
+    const btn = (label, cls, fn) => { const b = el('button', {className:cls || '', textContent:label}); b.addEventListener('pointerdown', e => e.preventDefault()); b.addEventListener('mousedown', e => e.preventDefault()); b.addEventListener('click', fn); return b; };
+    spellPop.replaceChildren(el('div', {className:'muted', textContent:'Looking for suggestions…'}));
+    spellPop.hidden = false; placeSpellPop();
+    setTimeout(() => {
+      if (spellTarget !== m) return;
+      let sug = [];
+      try { sug = spell.typo.suggest(m.w.replace(/’/g, "'"), 5); } catch (e) {}
+      if (m.w === m.w.toUpperCase()) sug = sug.map(x => x.toUpperCase());
+      const fix = w => () => {
+        hideSpellPop();
+        toolEdit(() => {
+          const runs = readRuns(m.b), f = (sliceRuns(runs, m.s, m.s + 1)[0] || {f:''}).f;
+          setRuns(m.b, [...sliceRuns(runs, 0, m.s), {t:w, f}, ...sliceRuns(runs, m.e)]);
+          setCaret(m.b, m.s + w.length);
+        });
+        scheduleSpell(0);
+      };
+      spellPop.replaceChildren(
+        ...(sug.length ? sug.map(w => btn(w, 'sug', fix(w))) : [el('div', {className:'muted', textContent:'No suggestions'})]),
+        el('hr'),
+        btn(`Add “${m.w}” to my dictionary`, '', () => { myWords.add(m.w.replace(/’/g, "'").toLowerCase()); saveWords(); hideSpellPop(); scheduleSpell(0); setStatus(`Added “${m.w}” to your dictionary`); }),
+        btn('Ignore for now', '', () => { ignoredNow.add(m.w.replace(/’/g, "'").toLowerCase()); spell.cache.clear(); hideSpellPop(); scheduleSpell(0); }));
+      placeSpellPop();
+    }, 30);
+  }
+  function placeSpellPop() {
+    if (!spellTarget) return;
+    let r;
+    try { const rg = document.createRange(); rg.setStart(...nodeAt(spellTarget.b, spellTarget.s)); rg.setEnd(...nodeAt(spellTarget.b, spellTarget.e)); r = rg.getBoundingClientRect(); } catch (e) {}
+    if (!r || (!r.height && !r.top)) r = spellTarget.b.getBoundingClientRect();
+    const vv = window.visualViewport, vTop = vv ? vv.offsetTop : 0, vH = vv ? vv.height : innerHeight;
+    const h = spellPop.offsetHeight, w = spellPop.offsetWidth;
+    let top = r.bottom + 6;
+    if (top + h > vTop + vH - 8) top = r.top - h - 6;
+    spellPop.style.top = Math.max(vTop + 8, top) + 'px';
+    spellPop.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
+  }
+  editor.addEventListener('input', () => { hideSpellPop(); scheduleSpell(); });
+  editor.addEventListener('keydown', hideSpellPop);
+  window.addEventListener('scroll', placeSpellPop, {passive:true});
+  mainEl.addEventListener('scroll', placeSpellPop, {passive:true});
+  document.addEventListener('pointerdown', e => { if (!spellPop.hidden && !spellPop.contains(e.target) && !editor.contains(e.target)) hideSpellPop(); });
+  function showSpell() {
+    const on = spellOn();
+    const toggle = el('button', {className:'textbtn ' + (on ? '' : 'primary'), textContent:on ? 'Turn spell check off' : 'Turn spell check on'});
+    toggle.addEventListener('click', () => {
+      try { localStorage.setItem(SPELL_KEY, on ? 'off' : 'on'); } catch (e) {}
+      if (on) { CSS.highlights && CSS.highlights.delete('spell'); spell.misses = []; editor.spellcheck = false; }
+      else { if (spell.ready) { editor.spellcheck = false; scheduleSpell(0); } else { spell.failed = false; loadSpell(); } }
+      showSpell();
+    });
+    const input = el('input', {type:'text', placeholder:'Add a word, e.g. Chitungwiza', autocomplete:'off', autocapitalize:'off'});
+    const add = el('button', {className:'textbtn primary', textContent:'Add'});
+    const doAdd = () => { const w = input.value.trim().replace(/’/g, "'"); if (!w || /\s/.test(w)) { input.focus(); return; } myWords.add(w.toLowerCase()); saveWords(); scheduleSpell(0); showSpell(); };
+    add.addEventListener('click', doAdd);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
+    const chips = [...myWords].sort().map(w => {
+      const x = el('button', {textContent:'×', title:'Remove', ariaLabel:`Remove ${w}`});
+      x.addEventListener('click', () => { myWords.delete(w); saveWords(); scheduleSpell(0); showSpell(); });
+      return el('span', {className:'chip'}, w, x);
+    });
+    const state = !on ? 'Spell check is off.'
+      : spell.ready ? 'Spell check is on, using British English. Tap an underlined word for suggestions.'
+      : !hasHL || spell.failed ? 'Using Safari’s own spell check. Your dictionary needs the en_GB files on your site and a recent browser.'
+      : 'Spell check is loading.';
+    openPanel('Spelling and dictionary',
+      el('p', {textContent:state}), el('div', {className:'confirm-actions'}, toggle),
+      el('h3', {textContent:'My dictionary'}),
+      el('p', {textContent:'Words here are never marked as mistakes, in any script. Character names are always allowed.'}),
+      el('div', {className:'dict-add'}, input, add),
+      chips.length ? el('div', {className:'chips'}, ...chips) : el('p', {textContent:'No words added yet.'}));
+  }
+
+  /* ---------- notes ---------- */
+  function showNotes() {
+    const out = []; let scene = '';
+    blocks().forEach(b => {
+      if (b.dataset.type === 'scene' && txt(b).trim()) scene = txt(b).trim();
+      if (b.dataset.type === 'note' && txt(b).trim()) {
+        const row = el('button', {className:'item'}, el('span', {textContent:txt(b).trim()}), el('small', {textContent:scene ? scene.toUpperCase() : 'Before the first scene'}));
+        row.style.flexDirection = 'column'; row.style.alignItems = 'flex-start'; row.style.gap = '4px';
+        row.addEventListener('click', () => jumpTo(b));
+        out.push(row);
+      }
+    });
+    openPanel('Notes', el('p', {textContent:out.length ? `${out.length} ${out.length === 1 ? 'note' : 'notes'}. Tap one to go to it. Notes never print.` : 'No notes yet. Use the Note line type to add one.'}), ...out);
+  }
+
+  /* ---------- rename a character everywhere ---------- */
+  const escRe = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  function matchCase(sample, word) {
+    if (sample === sample.toUpperCase() && /[A-Z]/.test(sample)) return word.toUpperCase();
+    if (sample[0] === sample[0].toUpperCase()) return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    return word.toLowerCase();
+  }
+  function replaceIn(b, re, fn) {
+    const runs = readRuns(b), t = runsText(runs), hits = [...t.matchAll(re)];
+    if (!hits.length) return 0;
+    let out = [], pos = 0;
+    for (const h of hits) {
+      const f = (sliceRuns(runs, h.index, h.index + 1)[0] || {f:''}).f;
+      out.push(...sliceRuns(runs, pos, h.index), {t:fn(h[0]), f});
+      pos = h.index + h[0].length;
+    }
+    setRuns(b, [...out, ...sliceRuns(runs, pos)]);
+    return hits.length;
+  }
+  function showRename() {
+    const names = new Map();
+    blocks().forEach(b => { if (b.dataset.type === 'character') { const n = speakerOf(txt(b)); if (n) names.set(n, (names.get(n) || 0) + 1); } });
+    if (!names.size) { openPanel('Rename a character', el('p', {textContent:'There are no characters in this script yet.'})); return; }
+    const rows = [...names.entries()].sort((a, b) => b[1] - a[1]).map(([n, c]) => {
+      const r = el('button', {className:'item'}, el('span', {textContent:n}), el('small', {textContent:`${c} ${c === 1 ? 'speech' : 'speeches'}`}));
+      r.addEventListener('click', () => renameForm(n));
+      return r;
+    });
+    openPanel('Rename a character', el('p', {textContent:'Choose who to rename.'}), ...rows);
+  }
+  function renameForm(oldName) {
+    const input = el('input', {type:'text', value:oldName, autocomplete:'off', ariaLabel:'New name'});
+    input.style.cssText = 'width:100%;height:44px;font:16px var(--mono);text-transform:uppercase;color:var(--ink);background:var(--pill);border:1px solid transparent;border-radius:10px;padding:0 12px';
+    const also = el('input', {type:'checkbox', checked:true, id:'renameMentions'});
+    const lab = el('label', {htmlFor:'renameMentions'}, also, ' Also change the name where it’s mentioned in action and dialogue');
+    lab.style.cssText = 'display:flex;gap:8px;align-items:center;margin:12px 4px;font-size:14px';
+    const word = new RegExp(`(?<![\\p{L}\\p{N}])${escRe(oldName)}(?![\\p{L}\\p{N}])`, 'giu');
+    let cues = 0, mentions = 0;
+    blocks().forEach(b => {
+      if (b.dataset.type === 'character') { if (speakerOf(txt(b)) === oldName) cues++; }
+      else if (b.dataset.type !== 'scene') mentions += (txt(b).match(word) || []).length;
+    });
+    const go = el('button', {className:'textbtn primary', textContent:'Rename'});
+    const back = el('button', {className:'textbtn', textContent:'Back'});
+    back.addEventListener('click', showRename);
+    go.addEventListener('click', () => {
+      const nn = input.value.trim().replace(/\s+/g, ' ');
+      if (!nn || nn.toUpperCase() === oldName) { input.focus(); return; }
+      let n1 = 0, n2 = 0;
+      toolEdit(() => {
+        blocks().forEach(b => {
+          if (b.dataset.type === 'character') {
+            if (speakerOf(txt(b)) !== oldName) return;
+            // keep any extension such as (V.O.) after the name
+            n1 += replaceIn(b, /^[^(]*?(?=\s*\(|$)/gu, () => nn.toUpperCase());
+          } else if (also.checked && b.dataset.type !== 'scene') n2 += replaceIn(b, word, m => matchCase(m, nn));
+        });
+      });
+      repaginate(); closePanel();
+      setStatus(`Renamed ${oldName} to ${nn.toUpperCase()}: ${n1} ${n1 === 1 ? 'speech' : 'speeches'}${also.checked ? `, ${n2} ${n2 === 1 ? 'mention' : 'mentions'}` : ''}. Undo reverses it`);
+    });
+    openPanel(`Rename ${oldName}`,
+      el('p', {textContent:`${oldName} has ${cues} ${cues === 1 ? 'speech' : 'speeches'} and is mentioned ${mentions} ${mentions === 1 ? 'time' : 'times'} elsewhere.`}),
+      input, lab, el('div', {className:'confirm-actions'}, back, go));
+    input.focus(); input.select();
+  }
+
+  /* ---------- alternate lines: other versions of one line, kept with it ---------- */
+  function showAlts(target) {
+    let b = target;
+    if (!b) { const ci = caretInfo(); b = ci ? ci.block : (savedRange && blockOf(savedRange.startContainer)); }
+    if (!b || !editor.contains(b) || !txt(b).trim()) { toolsSheet.hidden = true; setStatus('Put the cursor in the line you want alternatives for'); return; }
+    const alts = altsOf(b) || [];
+    const save = alts => { toolEdit(() => { if (alts.length) b.dataset.alts = JSON.stringify(alts); else delete b.dataset.alts; }); };
+    const keep = el('button', {className:'textbtn primary', textContent:'Save this version as an alternate'});
+    keep.addEventListener('click', () => {
+      const r = readRuns(b);
+      save([...alts, [runsText(r), fmtOf(r)]]); showAlts(b);
+      setStatus('Saved. Now edit the line; this version stays here');
+    });
+    const rows = alts.map(([t, f], k) => {
+      const use = el('button', {className:'textbtn', textContent:'Use this'});
+      const del = el('button', {className:'textbtn', textContent:'Delete'});
+      use.addEventListener('click', () => {
+        const cur = readRuns(b), next = [...alts];
+        next[k] = [runsText(cur), fmtOf(cur)];        // the current line takes its place in the list
+        toolEdit(() => { setRuns(b, runsFrom(t, f)); b.dataset.alts = JSON.stringify(next); });
+        showAlts(b);
+      });
+      del.addEventListener('click', () => {
+        if (del.dataset.armed) { const next = alts.filter((_, i) => i !== k); save(next); showAlts(b); }
+        else { del.dataset.armed = '1'; del.textContent = 'Tap again to delete'; del.classList.add('armed'); }
+      });
+      return el('div', {className:'draft-row'}, el('div', {className:'meta'}, el('b', {textContent:t}), el('small', {textContent:`Alternate ${k + 1}`})), use, del);
+    });
+    openPanel('Alternate lines',
+      el('p', {textContent:`${LABELS[b.dataset.type]} line in the script now:`}),
+      el('div', {className:'diff'}, el('div', {className:'add', textContent:txt(b)})),
+      el('div', {className:'confirm-actions'}, keep),
+      ...(rows.length ? [el('h3', {textContent:'Alternates'}), ...rows] : [el('p', {textContent:'No alternates yet. Lines with alternates have a small gold mark beside them.'})]));
+  }
+
+  /* ---------- paper size ---------- */
+  function togglePaper() {
+    settings.paper = settings.paper === 'letter' ? 'a4' : 'letter';
+    try { localStorage.setItem(PAPER_KEY, settings.paper); } catch (e) {}
+    document.getElementById('paperState').textContent = settings.paper === 'letter' ? 'US Letter' : 'A4';
+    scheduleSave(); repaginate();
+    setStatus(settings.paper === 'letter' ? 'Paper: US Letter (for US contests and readers)' : 'Paper: A4');
+  }
+
   /* ---------- dual dialogue and scene numbers ---------- */
   function toggleDual() {
     toolsSheet.hidden = true;
@@ -2107,6 +3510,11 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     else if (t === 'dual') toggleDual();
     else if (t === 'numbers') toggleNumbers();
     else if (t === 'rails') toggleRails();
+    else if (t === 'notes') showNotes();
+    else if (t === 'rename') showRename();
+    else if (t === 'alts') showAlts();
+    else if (t === 'spell') showSpell();
+    else if (t === 'paper') togglePaper();
   });
 
   /* ---------- Fountain (.fountain) ---------- */
@@ -2222,6 +3630,107 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     closePicker();
   });
   Object.assign(window.__script, {toFountain, fromFountain});
+
+  /* ---------- Word (.docx) and plain text ---------- */
+  // a tiny zip writer (no compression), enough for a Word file
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = b => { let c = 0xffffffff; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  function zip(files) {
+    const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+    const u16 = v => [v & 255, (v >>> 8) & 255], u32 = v => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
+    for (const [name, text] of files) {
+      const data = enc.encode(text), nm = enc.encode(name), c = crc32(data);
+      const head = [...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(c), ...u32(data.length), ...u32(data.length), ...u16(nm.length), ...u16(0)];
+      parts.push(new Uint8Array([...u32(0x04034b50), ...head]), nm, data);
+      central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...head, ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off)]), nm);
+      off += 30 + nm.length + data.length;
+    }
+    const cdSize = central.reduce((a, p) => a + p.length, 0);
+    const end = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(cdSize), ...u32(off), ...u16(0)]);
+    const all = [...parts, ...central, end], out = new Uint8Array(all.reduce((a, p) => a + p.length, 0));
+    let p = 0; for (const a of all) { out.set(a, p); p += a.length; }
+    return out;
+  }
+  function toDocx(d) {
+    const st = d.settings || {}; applyPaper(st.paper);
+    const tw = pt => Math.round(pt * 20), ch = n => Math.round(n * PAGE.cw * 20);
+    const x = t => xmlEsc(t);
+    const run = r => `<w:r><w:rPr>${r.f.includes('b') ? '<w:b/>' : ''}${r.f.includes('i') ? '<w:i/>' : ''}${r.f.includes('u') ? '<w:u w:val="single"/>' : ''}${r.f.includes('s') ? '<w:strike/>' : ''}</w:rPr><w:t xml:space="preserve">${x(r.t)}</w:t></w:r>`;
+    const para = (runs, {left = 0, right = 0, align = 'left', before = 0, keep = false, brk = false} = {}) =>
+      `<w:p><w:pPr>${keep ? '<w:keepNext/>' : ''}${brk ? '<w:pageBreakBefore/>' : ''}<w:spacing w:before="${before * 240}" w:after="0" w:line="240" w:lineRule="exact"/><w:ind w:left="${ch(left)}" w:right="${ch(right)}"/><w:jc w:val="${align}"/></w:pPr>${runs.map(run).join('')}</w:p>`;
+    const IND = {scene:[0, 0], action:[0, 0], shot:[0, 0], transition:[0, 0], character:[22, 0], dialogue:[10, PAGE.cols - 45], paren:[16, PAGE.cols - 39]};
+    const body = [];
+    // title page in its own section, without page numbers
+    const tp = d.titlePage || {}, lines = v => (v || '').split('\n').map(y => y.trim()).filter(Boolean);
+    const hasTitle = d.title.trim() || (tp.author || '').trim();
+    if (hasTitle) {
+      body.push(para([], {before:17}));
+      if (d.title.trim()) body.push(para([{t:d.title.trim().toUpperCase(), f:''}], {align:'center'}));
+      if ((tp.author || '').trim()) { body.push(para([{t:tp.credit || 'Written by', f:''}], {align:'center', before:2})); lines(tp.author).forEach((a, i) => body.push(para([{t:a, f:''}], {align:'center', before:i ? 0 : 1}))); }
+      lines(tp.source).forEach((a, i) => body.push(para([{t:a, f:''}], {align:'center', before:i ? 0 : 2})));
+      lines(tp.contact).forEach((a, i) => body.push(para([{t:a, f:''}], {before:i ? 0 : 14})));
+      lines(tp.draft).forEach((a, i) => body.push(para([{t:a, f:''}], {align:'right', before:i ? 0 : 1})));
+    }
+    const sect = (first) => `<w:sectPr>${first ? '' : '<w:headerReference w:type="default" r:id="rIdH"/><w:titlePg/><w:pgNumType w:start="1"/>'}<w:pgSz w:w="${tw(PAGE.w)}" w:h="${tw(PAGE.h)}"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="2160" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>`;
+    if (hasTitle) body.push(`<w:p><w:pPr>${sect(true)}</w:pPr></w:p>`);
+    let first = true, prev = null;
+    for (const [type, raw, , fmt] of d.blocks) {
+      if (type === 'note') continue;
+      let runs = trimRuns(runsFrom(raw, fmt));
+      if (!runs.length) continue;
+      if (CAPS.has(type)) runs = runs.map(r => ({...r, t:r.t.toUpperCase()}));
+      if (type === 'paren' && !/^\(.*\)$/.test(runsText(runs))) runs = [{t:'(', f:''}, ...runs, {t:')', f:''}];
+      const [left, right] = IND[type] || [0, 0];
+      const inSpeech = (type === 'dialogue' || type === 'paren') && (prev === 'character' || prev === 'dialogue' || prev === 'paren');
+      body.push(para(runs, {left, right, align:type === 'transition' ? 'right' : 'left', before:first || inSpeech ? 0 : 1,
+        keep:type === 'scene' || type === 'character' || type === 'paren' || type === 'shot'}));
+      first = false; prev = type;
+    }
+    if (first) body.push(para([]));
+    const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+    const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${W}><w:body>${body.join('')}${sect(false)}</w:body></w:document>`;
+    const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles ${W}><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:eastAsia="Courier New"/><w:sz w:val="24"/><w:szCs w:val="24"/><w:lang w:val="en-GB"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="exact"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>`;
+    const header = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ${W}><w:p><w:pPr><w:jc w:val="right"/></w:pPr><w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>2</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r><w:r><w:t>.</w:t></w:r></w:p></w:hdr>`;
+    return zip([
+      ['[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/></Types>'],
+      ['_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'],
+      ['word/_rels/document.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdS" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rIdH" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/></Relationships>'],
+      ['word/document.xml', doc], ['word/styles.xml', styles], ['word/header1.xml', header]]);
+  }
+  function toText(d) {
+    const {items} = layoutScript(d.blocks, d.settings && d.settings.paper);
+    const {pages} = paginate(items);
+    const lineText = l => {
+      if (!l) return '';
+      if (l.segs) { let out = ''; for (const sg of l.segs) { out = out.padEnd(sg.x) + runsText(sg.runs); } return out; }
+      const t = runsText(l.runs);
+      return l.align === 'right' ? ' '.repeat(Math.max(0, PAGE.cols - t.length)) + t : ' '.repeat(l.x) + t;
+    };
+    const out = [];
+    const tp = d.titlePage || {};
+    if (d.title.trim() || (tp.author || '').trim()) {
+      out.push(titlePageLines(d).map(l => !l ? '' : l.align === 'center' ? ' '.repeat(Math.max(0, Math.floor((PAGE.cols - runsText(l.runs).length) / 2))) + runsText(l.runs) : lineText(l)).join('\n').replace(/\s+$/, ''), '\f');
+    }
+    pages.forEach((p, n) => {
+      if (n) out.push('\f');
+      out.push((n ? ' '.repeat(PAGE.cols - String(n + 1).length - 1) + (n + 1) + '.' : '') + '\n\n' + p.map(lineText).join('\n').replace(/\s+$/, ''));
+    });
+    return out.join('\n') + '\n';
+  }
+  const fileName = (d, ext) => (d.title.trim() || 'Untitled script').replace(/[\\/:*?"<>|]+/g, '-') + ext;
+  document.getElementById('docxBtn').addEventListener('click', () => {
+    const d = currentData();
+    if (!hasContent(d)) { setStatus('Nothing to download yet'); return; }
+    saveBlob(toDocx(d), fileName(d, '.docx'), 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    applyPaper(settings.paper); closePicker();
+  });
+  document.getElementById('txtBtn').addEventListener('click', () => {
+    const d = currentData();
+    if (!hasContent(d)) { setStatus('Nothing to download yet'); return; }
+    saveBlob(new TextEncoder().encode(toText(d)), fileName(d, '.txt'), 'text/plain');
+    closePicker();
+  });
+  Object.assign(window.__script, {toDocx, toText});
 
   /* ---------- side toolbars (iPad) and full screen ---------- */
   const RAIL_KEY = 'script-editor:rails';
@@ -2384,19 +3893,15 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       armTimer = setTimeout(disarm, 3000); return;
     }
     disarm();
-    if (driveState === 'reconnect' && doc.dirty && hasContent(currentData())) {
-      setStatus('Reconnect Drive first so this script is saved'); return;
-    }
-    if (driveState === 'on' && !(await flushCurrent())) {
-      setStatus('Current script isn’t in Drive yet. Try again in a moment'); return;
-    }
+    // the current script is kept on this device (and goes to Drive when it can), so it's safe to move on
+    if (!(await flushCurrent())) { setStatus('Couldn’t save the current script on this device. Try again'); return; }
     const linked = !!doc.fileId;
     commitNow();
     render([['scene', '', 0]]); titleEl.value = '';
     titlePage = {...TP_DEFAULT(), credit:titlePage.credit, author:titlePage.author, contact:titlePage.contact};
-    settings = {sceneNumbers:false}; drafts = [];
+    settings = freshSettings(); drafts = [];
     renderTpCard();
-    doc = {fileId:null, rev:null, dirty:false};
+    doc = {fileId:null, rev:null, dirty:false, key:newKey()};
     if (linked) resetHistory(); else commitNow();
     editor.focus(); setCaret(editor.firstElementChild, 0);
     refreshUI(); saveLocal(); pageScrollTop();
@@ -2478,15 +3983,17 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   if (saved) {
     titleEl.value = saved.title || ''; render(saved.blocks);
     titlePage = {...TP_DEFAULT(), ...(saved.titlePage || {})};
-    settings = {sceneNumbers:false, ...(saved.settings || {})}; drafts = Array.isArray(saved.drafts) ? saved.drafts : [];
+    settings = {...freshSettings(), ...(saved.settings || {})}; drafts = Array.isArray(saved.drafts) ? saved.drafts : [];
     const d = saved.doc || {};
-    doc = {fileId:d.fileId || null, rev:d.rev || null, dirty:saved.doc ? (!!d.dirty || !d.rev) : true};
+    doc = {fileId:d.fileId || null, rev:d.rev || null, dirty:saved.doc ? (!!d.dirty || !d.rev) : true, key:d.key || (d.fileId ? 'drive-' + d.fileId : newKey())};
   } else render([['scene', '', 0]]);
   commitNow(); updateUndo(); refreshUI(); renderTpCard();
   setRails(wantRails()); pin();
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
+  setTimeout(loadSpell, 1200);
   driveState = tokenValid() ? 'on' : (wasConnected() ? 'reconnect' : 'off');
   updateDriveUI();
-  if (driveState === 'on') syncNow();
+  if (driveState === 'on') syncNow().then(syncPending);
   else setStatus(saved ? 'Saved on this device' : '');
   if (signInNote) setStatus(signInNote);
 })();
