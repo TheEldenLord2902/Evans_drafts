@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Script Editor">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
 <title>Script Editor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -154,7 +160,6 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .rail .textbtn.tool-b{font-size:13px;min-height:38px}
 .rail #title{flex:none;width:100%;font-size:15px;padding:9px 8px;background:var(--pill);white-space:nowrap;text-overflow:ellipsis}
 .rail #pages,.rail #status{display:block;white-space:normal;text-align:center;font-size:12px;line-height:1.35}
-.rail #fullBtn{width:100%}
 html.rails{--rail:112px;--fs:min(17px, calc((100vw - 2 * var(--rail) - 24px) / 39.5))}
 /* app shell (iPad, and side toolbars): nothing on screen moves, only the script scrolls */
 html.shell{padding:0;height:100%;overflow:hidden}
@@ -245,14 +250,14 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     <button class="textbtn" id="toolsBtn">Tools</button>
     <button class="textbtn" id="new">New</button>
     <button class="textbtn primary" id="drive">Connect Drive</button>
-    <button class="icon" id="fullBtn" aria-label="Full screen" title="Full screen" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
   </div>
   <div class="row findbar" id="findBar" hidden>
     <input id="findIn" type="search" placeholder="Find" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Find">
     <input id="replIn" type="text" placeholder="Replace with" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Replace with">
     <span id="findCount"></span>
-    <button class="icon" id="findPrev" aria-label="Previous match"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>
-    <button class="icon" id="findNext" aria-label="Next match"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="icon" id="findPrev" aria-label="Previous match" title="Previous match"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>
+    <button class="icon" id="findNext" aria-label="Next match" title="Next match"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="textbtn primary" id="findGo">Find</button>
     <button class="textbtn" id="replOne">Replace</button>
     <button class="textbtn" id="replAll">Replace all</button>
     <button class="textbtn" id="findClose">Done</button>
@@ -822,6 +827,35 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     if (t && t.t && Date.now() < t.exp - 60000) { token = t.t; tokenExp = t.exp; }
   } catch (e) {}
 
+  // Opened from the Home Screen, Google's pop-up sign-in can't hand the result back,
+  // so sign in on a full page instead and come back here with the access
+  const STANDALONE = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  const REDIRECT_URI = location.origin + location.pathname.replace(/index\.html$/, '');
+  const STATE_KEY = 'script-editor:oauth-state', HINT_KEY = 'script-editor:hint';
+  let signInNote = '';
+  (function readSignInReturn() {
+    if (!/(access_token|error)=/.test(location.hash)) return;
+    const h = new URLSearchParams(location.hash.slice(1));
+    let expected = null;
+    try { expected = localStorage.getItem(STATE_KEY); localStorage.removeItem(STATE_KEY); } catch (e) {}
+    history.replaceState(null, '', location.pathname + location.search);
+    if (h.get('error')) { signInNote = h.get('error') === 'access_denied' ? 'Drive access wasn’t allowed' : 'Google sign-in didn’t finish'; return; }
+    if (!expected || h.get('state') !== expected) { signInNote = 'Sign-in ignored: it didn’t start from this app'; return; }
+    if (!(h.get('scope') || '').includes('drive.file')) { signInNote = 'Drive access wasn’t allowed. Tap Connect and tick the Drive box'; return; }
+    token = h.get('access_token'); tokenExp = Date.now() + (+h.get('expires_in') || 3600) * 1000;
+    try { sessionStorage.setItem(TOKEN_KEY, JSON.stringify({t:token, exp:tokenExp})); localStorage.setItem(CONN_KEY, '1'); } catch (e) {}
+  })();
+  function pageSignIn() {
+    saveLocal();
+    const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    let hint = '';
+    try { localStorage.setItem(STATE_KEY, state); hint = localStorage.getItem(HINT_KEY) || ''; } catch (e) {}
+    const p = new URLSearchParams({client_id:CLIENT_ID, redirect_uri:REDIRECT_URI, response_type:'token', scope:SCOPE, include_granted_scopes:'true', state});
+    if (!wasConnected()) p.set('prompt', 'select_account consent');
+    else if (hint) p.set('login_hint', hint);
+    location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + p.toString();
+  }
+
   function initGis() {
     if (tokenClient || !(window.google && google.accounts && google.accounts.oauth2)) return;
     tokenClient = google.accounts.oauth2.initTokenClient({
@@ -975,6 +1009,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     driveBtn.textContent = driveState === 'reconnect' ? 'Reconnect Drive' : 'Connect Drive';
   }
   function connect() {
+    if (STANDALONE) { pageSignIn(); return; }
     // must run straight from the tap so the Google window isn't blocked
     getToken().then(() => {
       driveState = 'on';
@@ -1018,7 +1053,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     if (!email) {
       try {
         const r = await api(`${API}/about?fields=user(emailAddress)`);
-        if (r.ok) { email = ((await r.json()).user || {}).emailAddress || ''; try { sessionStorage.setItem(ACCT_KEY, email); } catch (e) {} }
+        if (r.ok) { email = ((await r.json()).user || {}).emailAddress || ''; try { sessionStorage.setItem(ACCT_KEY, email); localStorage.setItem(HINT_KEY, email); } catch (e) {} }
       } catch (e) {}
     }
     acctName.textContent = email ? 'Drive: ' + email : 'Connected to Google Drive';
@@ -1030,9 +1065,9 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       return;
     }
     if (conflict) { closePicker(); return; }
-    try { if (token && window.google) google.accounts.oauth2.revoke(token, () => {}); } catch (e) {}
+    try { if (token) fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(token), {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}}).catch(() => {}); } catch (e) {}
     token = null; tokenExp = 0; folderCache = null;
-    try { sessionStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(ACCT_KEY); localStorage.removeItem(CONN_KEY); } catch (e) {}
+    try { sessionStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(ACCT_KEY); localStorage.removeItem(CONN_KEY); localStorage.removeItem(HINT_KEY); } catch (e) {}
     driveState = 'off'; updateDriveUI();
     // clear this device's copy so nothing from this account is saved into the next one
     render([['scene', '', 0]]); titleEl.value = ''; titlePage = TP_DEFAULT(); settings = {sceneNumbers:false}; drafts = []; renderTpCard();
@@ -1794,9 +1829,14 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     });
     findAll(); setStatus(`Replaced ${n} ${n === 1 ? 'match' : 'matches'}`);
   }
-  findIn.addEventListener('input', () => { findAll(); paintMatches(true); });
+  let freshFind = true;   // the first press of Find shows the first match, later presses move on
+  findIn.addEventListener('input', () => { findAll(); paintMatches(true); freshFind = true; });
+  document.getElementById('findGo').addEventListener('click', () => {
+    if (!findIn.value) { findIn.focus(); findCount.textContent = 'Type a word to find'; return; }
+    if (freshFind) { findAll(); paintMatches(true); freshFind = false; } else stepMatch(1);
+  });
   findIn.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); stepMatch(e.shiftKey ? -1 : 1); }
+    if (e.key === 'Enter') { e.preventDefault(); if (freshFind && !e.shiftKey) { paintMatches(true); freshFind = false; } else stepMatch(e.shiftKey ? -1 : 1); }
     if (e.key === 'Escape') { e.preventDefault(); closeFind(); }
   });
   replIn.addEventListener('keydown', e => {
@@ -2114,7 +2154,6 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   const RAIL_KEY = 'script-editor:rails';
   const railL = document.getElementById('railL'), railR = document.getElementById('railR');
   const rowMain = document.getElementById('rowMain'), rowTypes = document.getElementById('rowTypes');
-  const fullBtn = document.getElementById('fullBtn');
   const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   document.documentElement.classList.toggle('ios', isIOSDevice);
   document.documentElement.classList.toggle('shell', isIOSDevice);
@@ -2135,7 +2174,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     n.textContent = 'Scene numbers: ' + (settings.sceneNumbers ? 'on' : 'off');
   }
   const movable = [titleEl, document.getElementById('pages'), statusEl, undoBtn, redoBtn, document.querySelector('.fmt'),
-    document.querySelector('.types'), openBtn, document.getElementById('toolsBtn'), newBtn, driveBtn, fullBtn];
+    document.querySelector('.types'), openBtn, document.getElementById('toolsBtn'), newBtn, driveBtn];
   const homes = new Map(movable.map(n => { const ph = document.createComment(''); n.before(ph); return [n, ph]; }));
   let railsOn = false;
   function railPref() { try { return localStorage.getItem(RAIL_KEY); } catch (e) { return null; } }
@@ -2159,7 +2198,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       railL.replaceChildren(pair, label('Style'), document.querySelector('.fmt'), label('Line'), document.querySelector('.types'),
         label('Tools'), ...railTools);
       railLabels();
-      railR.replaceChildren(titleEl, document.getElementById('pages'), statusEl, openBtn, newBtn, driveBtn, fullBtn);
+      railR.replaceChildren(titleEl, document.getElementById('pages'), statusEl, openBtn, newBtn, driveBtn);
     } else {
       movable.forEach(n => homes.get(n).after(n));
       railL.replaceChildren(); railR.replaceChildren();
@@ -2183,35 +2222,6 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     setRails(wantRails());
     toolsSheet.hidden = true;
   }
-
-  // Full screen hides Safari's own bars, where the browser allows it
-  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
-  const canFull = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
-  fullBtn.hidden = !canFull;
-  function toggleFull() {
-    const d = document, root = d.documentElement;
-    try {
-      if (fsEl()) { (d.exitFullscreen || d.webkitExitFullscreen).call(d); return; }
-      const req = root.requestFullscreen || root.webkitRequestFullscreen;
-      const p = req && req.call(root);
-      if (p && p.catch) p.catch(() => setStatus('Safari didn’t allow full screen here'));
-    } catch (e) { setStatus('Safari didn’t allow full screen here'); }
-  }
-  function syncFull() {
-    const on = !!fsEl();
-    document.documentElement.classList.toggle('fs', on);
-    setTimeout(() => { pin(); measure(); }, 50);
-    fullBtn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
-    fullBtn.title = on ? 'Exit full screen' : 'Full screen';
-    fullBtn.innerHTML = on
-      ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>'
-      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
-  }
-  fullBtn.addEventListener('pointerdown', e => e.preventDefault());
-  fullBtn.addEventListener('mousedown', e => e.preventDefault());
-  fullBtn.addEventListener('click', toggleFull);
-  document.addEventListener('fullscreenchange', syncFull);
-  document.addEventListener('webkitfullscreenchange', syncFull);
 
   /* ---------- events ---------- */
   editor.addEventListener('beforeinput', e => {
@@ -2417,6 +2427,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   updateDriveUI();
   if (driveState === 'on') syncNow();
   else setStatus(saved ? 'Saved on this device' : '');
+  if (signInNote) setStatus(signInNote);
 })();
 </script>
 </body>
