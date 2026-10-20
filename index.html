@@ -63,6 +63,9 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .icon:not(:disabled):active{background:var(--pill)}
 .textbtn{height:42px;padding:0 14px;border:1px solid var(--line);background:transparent;color:var(--pill-ink);border-radius:10px;font-size:15px;font-weight:500;white-space:nowrap}
 .textbtn.armed{background:#b3261e;border-color:#b3261e;color:#fff}
+.fmt{display:flex;gap:2px;flex:0 0 auto;padding-right:8px;margin-right:2px;border-right:1px solid var(--line)}
+.fmt .icon{font-size:17px}
+.fmt .icon[aria-pressed="true"]{background:var(--on);color:var(--on-ink)}
 .types{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .types::-webkit-scrollbar{display:none}
 .type{flex:0 0 auto;height:42px;padding:0 16px;border:0;border-radius:21px;background:var(--pill);color:var(--pill-ink);font-size:15px;font-weight:500}
@@ -85,6 +88,15 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .item.current span{font-weight:600}
 .item small{color:var(--muted);font-size:13px;white-space:nowrap}
 .empty{padding:18px;color:var(--muted);font-size:15px;line-height:1.4;margin:0}
+.tp-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:.45em;width:100%;max-width:39.5em;margin:0 auto 16px;padding:2.2em 1.75em 1.8em;font-size:var(--fs);font-family:var(--mono);color:var(--ink);background:var(--page);border:0;border-radius:2px;box-shadow:var(--shadow);text-align:center}
+.tp-card .tp-label{position:absolute;top:10px;left:14px;font:500 12px var(--ui);color:var(--muted)}
+.tp-card .tp-title{font-weight:700;text-transform:uppercase}
+.tp-card .tp-empty{font:15px var(--ui);color:var(--muted)}
+.form{overflow:auto;padding:14px 18px 20px;display:grid;gap:14px}
+.form label{display:grid;gap:6px;font:500 14px var(--ui);color:var(--muted)}
+.form label small{font-weight:400}
+.form input,.form textarea{width:100%;font:16px/1.35 var(--ui);color:var(--ink);background:var(--pill);border:1px solid transparent;border-radius:10px;padding:10px 12px;resize:vertical}
+.form input:focus,.form textarea:focus{outline:none;border-color:var(--brass)}
 main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px 0}
 .page{
   position:relative;font-size:var(--fs);font-family:var(--mono);
@@ -112,6 +124,11 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 .el[data-type="transition"]{text-transform:uppercase;text-align:right}
 .el[data-type="shot"]{text-transform:uppercase}
 .el[data-type="note"]{font-style:italic;color:var(--muted)}
+.fb{font-weight:700}
+.fi{font-style:italic}
+.fu{text-decoration:underline}
+.fs{text-decoration:line-through}
+.fu.fs{text-decoration:underline line-through}
 .el.blank::before{position:absolute;left:0;right:0;top:0;color:var(--faint);pointer-events:none;font-weight:400}
 .el.blank[data-type="scene"]::before{content:"INT. LOCATION – DAY"}
 .el.blank[data-type="action"]::before{content:"Action"}
@@ -144,6 +161,12 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     <button class="textbtn" id="keepMine">Keep this version</button>
   </div>
   <div class="row">
+    <div class="fmt" role="toolbar" aria-label="Text style">
+      <button class="icon" data-fmt="b" aria-label="Bold" aria-pressed="false"><b>B</b></button>
+      <button class="icon" data-fmt="i" aria-label="Italic" aria-pressed="false"><i style="font-family:Georgia,serif">I</i></button>
+      <button class="icon" data-fmt="u" aria-label="Underline" aria-pressed="false"><u>U</u></button>
+      <button class="icon" data-fmt="s" aria-label="Strikethrough" aria-pressed="false"><s>S</s></button>
+    </div>
     <div class="types" role="toolbar" aria-label="Line type">
       <button class="type" data-type="scene">Scene</button>
       <button class="type" data-type="action">Action</button>
@@ -159,6 +182,13 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 </header>
 
 <main>
+  <button class="tp-card" id="tpCard" type="button" aria-label="Edit title page">
+    <span class="tp-label">Title page</span>
+    <span class="tp-title" id="tpCardTitle"></span>
+    <span id="tpCardCredit"></span>
+    <span id="tpCardAuthor"></span>
+    <span class="tp-empty" id="tpCardEmpty">Add a title page</span>
+  </button>
   <div class="page">
     <div id="editor" class="editor" contenteditable="true" spellcheck="true" autocapitalize="sentences" autocorrect="on" role="textbox" aria-multiline="true" aria-label="Screenplay"></div>
   </div>
@@ -175,6 +205,22 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       </span>
     </div>
     <div class="list" id="pickerList"></div>
+  </div>
+</div>
+<div class="overlay" id="tpSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tpHead">
+    <div class="sheet-head">
+      <h2 id="tpHead">Title page</h2>
+      <button class="textbtn primary" id="tpDone">Done</button>
+    </div>
+    <div class="form">
+      <label>Title<input id="tpTitle" type="text" autocomplete="off" placeholder="Untitled script"></label>
+      <label>Credit<input id="tpCredit" type="text" autocomplete="off" placeholder="Written by"></label>
+      <label>Author<input id="tpAuthor" type="text" autocomplete="off" placeholder="Your name"></label>
+      <label>Based on <small>(optional)</small><input id="tpSource" type="text" autocomplete="off" placeholder="Based on the novel by…"></label>
+      <label>Contact details<textarea id="tpContact" rows="3" placeholder="Email, phone or agent"></textarea></label>
+      <label>Draft and date<textarea id="tpDraft" rows="2" placeholder="First draft&#10;October 2026"></textarea></label>
+    </div>
   </div>
 </div>
 <input type="file" id="importInput" accept=".json,application/json" hidden>
@@ -196,24 +242,109 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   const redoBtn = document.getElementById('redo');
   const newBtn = document.getElementById('new');
   const typeBtns = [...document.querySelectorAll('.type')];
+  const fmtBtns = [...document.querySelectorAll('.fmt button')];
 
   /* ---------- blocks ---------- */
   const txt = b => b.textContent.replace(/\u200b/g, '');
   const blocks = () => [...editor.children];
 
-  function setText(b, t) {
-    t = t.replace(/[\r\n]+/g, ' ');
-    if (t === '') { b.replaceChildren(document.createElement('br')); b.classList.add('blank'); }
-    else { b.replaceChildren(document.createTextNode(t)); b.classList.remove('blank'); }
+  // A line's text is a list of runs: {t:text, f:flags} where flags use b i u s
+  const FLAGS = 'bius';
+  const normFlags = f => FLAGS.split('').filter(c => f.includes(c)).join('');
+  const xorFlags = (a, b) => { let f = a; for (const c of b) f = f.includes(c) ? f.replace(c, '') : f + c; return normFlags(f); };
+  const clsOf = f => f.split('').map(c => 'f' + c).join(' ');
+  const runsText = runs => runs.map(r => r.t).join('');
+  function mergeRuns(runs) {
+    const out = [];
+    for (const r of runs) {
+      if (!r.t) continue;
+      const last = out[out.length - 1];
+      if (last && last.f === r.f) last.t += r.t; else out.push({t:r.t, f:r.f});
+    }
+    return out;
   }
-  function makeBlock(type, text, manual) {
+  function sliceRuns(runs, a, z = Infinity) {
+    const out = []; let pos = 0;
+    for (const r of runs) {
+      const s0 = pos, e0 = pos + r.t.length; pos = e0;
+      const x = Math.max(a, s0), y = Math.min(z, e0);
+      if (y > x) out.push({t:r.t.slice(x - s0, y - s0), f:r.f});
+    }
+    return out;
+  }
+  function styleAt(runs, off) {
+    let pos = 0;
+    for (const r of runs) { if (off > pos && off <= pos + r.t.length) return r.f; pos += r.t.length; }
+    return runs.length && off === 0 ? runs[0].f : '';
+  }
+  function runsFrom(text, fmt) {
+    text = text || '';
+    if (!Array.isArray(fmt)) return [{t:text, f:''}];
+    const out = []; let pos = 0;
+    for (const [len, f] of fmt) { out.push({t:text.slice(pos, pos + len), f:normFlags(String(f || ''))}); pos += len; }
+    return pos === text.length ? mergeRuns(out) : [{t:text, f:''}];
+  }
+  const fmtOf = runs => runs.some(r => r.f) ? runs.map(r => [r.t.length, r.f]) : 0;
+  function flagsOf(node, block) {
+    let f = '';
+    for (let n = node.parentNode; n && n !== block; n = n.parentNode) {
+      if (n.nodeType !== 1) continue;
+      const tag = n.tagName;
+      if (tag === 'B' || tag === 'STRONG') f += 'b';
+      else if (tag === 'I' || tag === 'EM') f += 'i';
+      else if (tag === 'U') f += 'u';
+      else if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') f += 's';
+      if (n.classList) for (const c of FLAGS) if (n.classList.contains('f' + c)) f += c;
+      const st = n.style;
+      if (st) {
+        if (st.fontWeight === 'bold' || +st.fontWeight >= 600) f += 'b';
+        if (st.fontStyle === 'italic') f += 'i';
+        const td = (st.textDecorationLine || '') + ' ' + (st.textDecoration || '');
+        if (td.includes('underline')) f += 'u';
+        if (td.includes('line-through')) f += 's';
+      }
+    }
+    return normFlags(f);
+  }
+  function readRuns(b) {
+    const out = [];
+    const w = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = w.nextNode())) out.push({t:n.data.replace(/\u200b/g, '').replace(/[\r\n]+/g, ' '), f:flagsOf(n, b)});
+    return mergeRuns(out);
+  }
+  function setRuns(b, runs) {
+    runs = mergeRuns(runs.map(r => ({t:r.t.replace(/\u200b/g, '').replace(/[\r\n]+/g, ' '), f:r.f})));
+    if (!runs.length) { b.replaceChildren(document.createElement('br')); b.classList.add('blank'); return; }
+    b.replaceChildren(...runs.map(r => {
+      const tn = document.createTextNode(r.t);
+      if (!r.f) return tn;
+      const sp = document.createElement('span'); sp.className = clsOf(r.f); sp.append(tn); return sp;
+    }));
+    b.classList.remove('blank');
+  }
+  function isCanonical(b, runs) {
+    const k = b.childNodes;
+    if (!runs.length) return k.length === 1 && k[0].nodeName === 'BR';
+    if (k.length !== runs.length) return false;
+    for (let i = 0; i < runs.length; i++) {
+      const r = runs[i], n = k[i];
+      if (!r.f) { if (n.nodeType !== 3 || n.data !== r.t) return false; }
+      else if (n.nodeName !== 'SPAN' || n.attributes.length !== 1 || n.className !== clsOf(r.f) ||
+               n.childNodes.length !== 1 || n.firstChild.nodeType !== 3 || n.firstChild.data !== r.t) return false;
+    }
+    return true;
+  }
+  const setText = (b, t) => setRuns(b, [{t, f:''}]);
+  function makeBlock(type, text, manual, fmt) {
     const b = document.createElement('div');
     b.className = 'el';
     b.dataset.type = TYPES.includes(type) ? type : 'action';
     if (manual) b.dataset.manual = '1';
-    setText(b, text || '');
+    setRuns(b, runsFrom(text, fmt));
     return b;
   }
+  const serialBlock = b => { const r = readRuns(b); return [b.dataset.type, runsText(r), b.dataset.manual ? 1 : 0, fmtOf(r)]; };
 
   /* ---------- caret ---------- */
   let savedRange = null;
@@ -250,17 +381,20 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     const e = r.collapsed ? s : (posOf(r.endContainer, r.endOffset) || s);
     return {block:s.block, off:s.off, start:s, end:e, collapsed:r.collapsed, cross:s.block !== e.block};
   }
-  function setCaret(b, off) {
+  function nodeAt(b, off) {
+    const w = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
+    let n, pos = 0, last = null;
+    while ((n = w.nextNode())) { if (off <= pos + n.data.length) return [n, Math.max(0, off - pos)]; pos += n.data.length; last = n; }
+    return last ? [last, last.data.length] : [b, 0];
+  }
+  function setRange(sb, so, eb, eo) {
     const sel = getSelection();
     const r = document.createRange();
-    const t = b.firstChild;
-    if (t && t.nodeType === 3) r.setStart(t, Math.max(0, Math.min(off, t.length)));
-    else r.setStart(b, 0);
-    r.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(r);
+    r.setStart(...nodeAt(sb, so)); r.setEnd(...nodeAt(eb, eo));
+    sel.removeAllRanges(); sel.addRange(r);
     savedRange = r.cloneRange();
   }
+  const setCaret = (b, off) => setRange(b, off, b, off);
   function ensureFocus() {
     if (document.activeElement === editor && caretInfo()) return;
     editor.focus({preventScroll:true});
@@ -279,7 +413,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       const sel = getSelection();
       let r = null;
       if (sel.rangeCount) {
-        const rr = sel.getRangeAt(0).getBoundingClientRect();
+        let rr = null; try { rr = sel.getRangeAt(0).getBoundingClientRect(); } catch (e) {}
         if (rr && (rr.height || rr.top)) r = rr;
       }
       if (!r && b) r = b.getBoundingClientRect();
@@ -311,12 +445,9 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     for (const b of blocks()) {
       if (!TYPES.includes(b.dataset.type)) b.dataset.type = 'action';
       if (b.hasAttribute('style')) b.removeAttribute('style');
-      const t = txt(b).replace(/[\r\n]+/g, ' ');
-      const k = b.childNodes;
-      const ok = t === '' ? (k.length === 1 && k[0].nodeName === 'BR')
-                          : (k.length === 1 && k[0].nodeType === 3 && k[0].data === t);
-      if (!ok) { setText(b, t); if (b === caretBlock) setCaret(b, Math.min(caretOff, t.length)); }
-      else b.classList.toggle('blank', t === '');
+      const runs = readRuns(b);
+      if (!isCanonical(b, runs)) { setRuns(b, runs); if (b === caretBlock) setCaret(b, Math.min(caretOff, runsText(runs).length)); }
+      else b.classList.toggle('blank', !runs.length);
     }
     if (!editor.children.length) { const b = makeBlock('action', ''); editor.append(b); setCaret(b, 0); }
     else if (!ci && wrapped) setCaret(wrapped, txt(wrapped).length);
@@ -325,7 +456,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   /* ---------- undo history ---------- */
   let hist = [], hi = -1, commitTimer = null;
   function snapshot() {
-    const bl = blocks().map(b => [b.dataset.type, txt(b), b.dataset.manual ? 1 : 0]);
+    const bl = blocks().map(serialBlock);
     const ci = caretInfo();
     return {key:JSON.stringify(bl), bl, caret: ci ? [blocks().indexOf(ci.block), ci.off] : null};
   }
@@ -340,7 +471,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   }
   function scheduleCommit() { clearTimeout(commitTimer); commitTimer = setTimeout(commitNow, 800); }
   function render(bl) {
-    editor.replaceChildren(...bl.map(([t, x, m]) => makeBlock(t, x, m)));
+    editor.replaceChildren(...bl.map(([t, x, m, f]) => makeBlock(t, x, m, f)));
     if (!editor.children.length) editor.append(makeBlock('scene', ''));
   }
   function restore(s) {
@@ -363,24 +494,24 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   function deleteSelection() {
     const ci = caretInfo(); if (!ci) return;
     const s = ci.start, e = ci.end;
-    if (s.block === e.block) {
-      const t = txt(s.block);
-      setText(s.block, t.slice(0, s.off) + t.slice(e.off)); setCaret(s.block, s.off); return;
-    }
-    const st = txt(s.block), et = txt(e.block);
+    const sr = readRuns(s.block), er = s.block === e.block ? sr : readRuns(e.block);
     let n = s.block.nextElementSibling;
-    while (n && n !== e.block) { const nx = n.nextElementSibling; n.remove(); n = nx; }
-    e.block.remove();
-    setText(s.block, st.slice(0, s.off) + et.slice(e.off)); setCaret(s.block, s.off);
+    if (s.block !== e.block) {
+      while (n && n !== e.block) { const nx = n.nextElementSibling; n.remove(); n = nx; }
+      e.block.remove();
+    }
+    setRuns(s.block, [...sliceRuns(sr, 0, s.off), ...sliceRuns(er, e.off)]);
+    setCaret(s.block, s.off);
   }
   function splitAtCaret() {
     edit(() => {
       let ci = caretInfo(); if (!ci) return;
       if (!ci.collapsed) { deleteSelection(); ci = caretInfo(); }
-      const b = ci.block, t = txt(b), off = ci.off, type = b.dataset.type;
-      const atEnd = off >= t.length;
-      const nb = makeBlock(atEnd ? ENTER_NEXT[type] : type, t.slice(off), !atEnd && !!b.dataset.manual);
-      setText(b, t.slice(0, off));
+      const b = ci.block, runs = readRuns(b), off = ci.off, type = b.dataset.type;
+      const atEnd = off >= runsText(runs).length;
+      const nb = makeBlock(atEnd ? ENTER_NEXT[type] : type, '', !atEnd && !!b.dataset.manual);
+      setRuns(nb, sliceRuns(runs, off));
+      setRuns(b, sliceRuns(runs, 0, off));
       b.after(nb);
       setCaret(nb, 0);
     });
@@ -391,33 +522,72 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       if (txt(b) === '' && b.dataset.type !== 'action') { b.dataset.type = 'action'; delete b.dataset.manual; }
       setCaret(b, 0); return;
     }
-    const pt = txt(prev), bt = txt(b);
-    if (bt === '') { b.remove(); setCaret(prev, pt.length); return; }
-    if (pt === '') { prev.remove(); setCaret(b, 0); return; }
-    setText(prev, pt + bt); b.remove(); setCaret(prev, pt.length);
+    const pr = readRuns(prev), br = readRuns(b), pl = runsText(pr).length;
+    if (!br.length) { b.remove(); setCaret(prev, pl); return; }
+    if (!pr.length) { prev.remove(); setCaret(b, 0); return; }
+    setRuns(prev, [...pr, ...br]); b.remove(); setCaret(prev, pl);
   }
   function joinForward(b) {
     const next = b.nextElementSibling; if (!next) return;
-    const bt = txt(b), nt = txt(next);
-    if (nt === '') { next.remove(); setCaret(b, bt.length); return; }
-    if (bt === '') { b.remove(); setCaret(next, 0); return; }
-    setText(b, bt + nt); next.remove(); setCaret(b, bt.length);
+    const br = readRuns(b), nr = readRuns(next), bl = runsText(br).length;
+    if (!nr.length) { next.remove(); setCaret(b, bl); return; }
+    if (!br.length) { b.remove(); setCaret(next, 0); return; }
+    setRuns(b, [...br, ...nr]); next.remove(); setCaret(b, bl);
   }
-  function insertAt(str) {
+  function insertAt(str, flags) {
     let ci = caretInfo(); if (!ci) return;
     if (!ci.collapsed) { deleteSelection(); ci = caretInfo(); }
-    const b = ci.block, t = txt(b), before = t.slice(0, ci.off), after = t.slice(ci.off);
+    const b = ci.block, runs = readRuns(b), off = ci.off;
+    const f = flags === undefined ? styleAt(runs, off) : flags;
+    const before = sliceRuns(runs, 0, off), after = sliceRuns(runs, off);
     let lines = str.replace(/\r\n?/g, '\n').replace(/\t/g, ' ').split('\n');
     const first = lines.shift();
     lines = lines.map(l => l.trim()).filter(Boolean);
-    if (!lines.length) { setText(b, before + first + after); setCaret(b, (before + first).length); return; }
-    setText(b, before + first);
+    if (!lines.length) { setRuns(b, [...before, {t:first, f}, ...after]); setCaret(b, off + first.length); return; }
+    setRuns(b, [...before, {t:first, f}]);
     let last = b;
     lines.forEach((l, i) => {
-      const nb = makeBlock(SCENE_RE.test(l) ? 'scene' : 'action', i === lines.length - 1 ? l + after : l);
+      const nb = makeBlock(SCENE_RE.test(l) ? 'scene' : 'action', '');
+      setRuns(nb, i === lines.length - 1 ? [{t:l, f:''}, ...after] : [{t:l, f:''}]);
       last.after(nb); last = nb;
     });
     setCaret(last, lines[lines.length - 1].length);
+  }
+
+  /* ---------- bold, italic, underline, strikethrough ---------- */
+  let pending = null;   // a style switched on or off with nothing selected, used by the next typed text
+  function toggleFormat(flag) {
+    ensureFocus();
+    const ci = caretInfo(); if (!ci) return;
+    if (ci.collapsed) {
+      if (pending && pending.block === ci.block && pending.off === ci.off) {
+        pending.toggle = xorFlags(pending.toggle, flag);
+        if (!pending.toggle) pending = null;
+      } else pending = {block:ci.block, off:ci.off, toggle:flag};
+      refreshUI(); return;
+    }
+    const s = ci.start, e = ci.end;
+    edit(() => {
+      const list = [];
+      for (let n = s.block; n; n = n.nextElementSibling) { list.push(n); if (n === e.block) break; }
+      const span = b => { const r = readRuns(b); return [r, b === s.block ? s.off : 0, b === e.block ? e.off : runsText(r).length]; };
+      let all = true, any = false;
+      for (const b of list) { const [r, a, z] = span(b); for (const x of sliceRuns(r, a, z)) { any = true; if (!x.f.includes(flag)) all = false; } }
+      if (!any) return;
+      for (const b of list) {
+        const [r, a, z] = span(b);
+        const mid = sliceRuns(r, a, z).map(x => ({t:x.t, f:all ? x.f.replace(flag, '') : normFlags(x.f + flag)}));
+        setRuns(b, [...sliceRuns(r, 0, a), ...mid, ...sliceRuns(r, z)]);
+      }
+      setRange(s.block, s.off, e.block, e.off);
+    });
+  }
+  function activeFlags() {
+    const ci = caretInfo(); if (!ci) return '';
+    let f = styleAt(readRuns(ci.block), ci.off);
+    if (!ci.collapsed) { const r = sliceRuns(readRuns(ci.start.block), ci.start.off, ci.start.block === ci.end.block ? ci.end.off : Infinity); if (r.length) f = r[0].f; }
+    if (pending && ci.collapsed && pending.block === ci.block && pending.off === ci.off) f = xorFlags(f, pending.toggle);
+    return f;
   }
   function applyType(type) {
     ensureFocus();
@@ -445,6 +615,9 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     const ci = caretInfo();
     const type = ci ? ci.block.dataset.type : null;
     typeBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.type === type)));
+    if (pending && !(ci && ci.collapsed && ci.block === pending.block && ci.off === pending.off)) pending = null;
+    const af = ci ? activeFlags() : '';
+    fmtBtns.forEach(b => b.setAttribute('aria-pressed', String(af.includes(b.dataset.fmt))));
     if (ci && ci.collapsed) {
       const atEnd = ci.off >= txt(ci.block).length;
       const base = 'Return gives ' + LABELS[atEnd ? ENTER_NEXT[type] : type];
@@ -454,10 +627,14 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 
   /* ---------- saving on this device ---------- */
   let saveTimer = null, changeSeq = 0;
-  let doc = {fileId:null, version:null, dirty:false};
+  let doc = {fileId:null, rev:null, dirty:false};
+  // a file's content revision: changes only when the script itself changes
+  const revOf = m => String(m.headRevisionId || m.modifiedTime || '');
   const setStatus = s => { statusEl.textContent = s; };
-  const currentData = () => ({app:'script-editor', v:1, title:titleEl.value,
-    blocks:blocks().map(b => [b.dataset.type, txt(b), b.dataset.manual ? 1 : 0])});
+  const TP_DEFAULT = () => ({credit:'Written by', author:'', source:'', contact:'', draft:''});
+  let titlePage = TP_DEFAULT();
+  const currentData = () => ({app:'script-editor', v:1, title:titleEl.value, titlePage:{...titlePage},
+    blocks:blocks().map(serialBlock)});
   const hasContent = d => !!(d.title.trim() || d.blocks.some(b => b[1].trim()));
   function scheduleSave() {
     doc.dirty = true; changeSeq++;
@@ -468,7 +645,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   function saveLocal() {
     clearTimeout(saveTimer);
     const d = currentData();
-    const data = {v:1, title:d.title, blocks:d.blocks, doc, savedAt:Date.now()};
+    const data = {v:1, title:d.title, titlePage:d.titlePage, blocks:d.blocks, doc, savedAt:Date.now()};
     try { localStorage.setItem(KEY, JSON.stringify(data)); if (driveState !== 'on') setStatus('Saved on this device'); }
     catch (e) { if (driveState !== 'on') setStatus('Not saved: this browser blocks storage'); }
   }
@@ -540,7 +717,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     return r;
   }
   async function getMeta(id) {
-    const r = await api(`${API}/files/${id}?fields=id,name,version,modifiedTime,trashed`);
+    const r = await api(`${API}/files/${id}?fields=id,name,headRevisionId,modifiedTime,trashed`);
     if (r.status === 404) return null;
     if (!r.ok) throw new Error('Drive ' + r.status);
     const m = await r.json();
@@ -574,7 +751,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     const boundary = 'se' + Math.random().toString(36).slice(2);
     const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
                  `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(data)}\r\n--${boundary}--`;
-    const fields = 'fields=id,name,version,modifiedTime';
+    const fields = 'fields=id,name,headRevisionId,modifiedTime';
     const url = doc.fileId ? `${UP}/files/${doc.fileId}?uploadType=multipart&${fields}` : `${UP}/files?uploadType=multipart&${fields}`;
     const r = await api(url, {method:doc.fileId ? 'PATCH' : 'POST', headers:{'Content-Type':`multipart/related; boundary=${boundary}`}, body});
     if (!r.ok) throw new Error('Drive ' + r.status);
@@ -598,11 +775,11 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     try {
       if (doc.fileId) {
         const m = await getMeta(doc.fileId);
-        if (!m) { doc.fileId = null; doc.version = null; }
-        else if (doc.version && String(m.version) !== String(doc.version)) { showConflict(m); return; }
+        if (!m) { doc.fileId = null; doc.rev = null; }
+        else if (doc.rev && revOf(m) !== doc.rev) { showConflict(m); return; }
       }
       const meta = await upload(data);
-      doc.fileId = meta.id; doc.version = String(meta.version);
+      doc.fileId = meta.id; doc.rev = revOf(meta);
       if (changeSeq === seq) doc.dirty = false; else saveAgain = true;
       saveLocal();
       setStatus('Saved to Drive');
@@ -618,7 +795,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     lastCheck = Date.now();
     try {
       const m = await getMeta(doc.fileId);
-      if (!m || String(m.version) === String(doc.version)) return;
+      if (!m || revOf(m) === doc.rev) return;
       if (doc.dirty) { showConflict(m); return; }
       const f = await downloadFile(doc.fileId);
       if (f) { loadDoc(f.meta, f.data, true); setStatus('Updated from Drive'); }
@@ -635,8 +812,9 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   function loadDoc(meta, data, keepHistory) {
     if (keepHistory) commitNow();
     titleEl.value = data.title || '';
-    render(data.blocks);
-    doc = {fileId:meta.id, version:String(meta.version), dirty:false};
+    titlePage = {...TP_DEFAULT(), ...(data.titlePage || {})};
+    render(data.blocks); renderTpCard();
+    doc = {fileId:meta.id, rev:revOf(meta), dirty:false};
     if (keepHistory) { commitNow(); updateUndo(); } else resetHistory();
     if (document.activeElement === editor) setCaret(editor.firstElementChild, 0);
     refreshUI(); saveLocal();
@@ -677,11 +855,11 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       const f = await downloadFile(doc.fileId);
       hideConflict();
       if (f) { loadDoc(f.meta, f.data, true); setStatus('Updated from Drive'); }
-      else { doc.fileId = null; doc.version = null; saveToDrive(true); }
+      else { doc.fileId = null; doc.rev = null; saveToDrive(true); }
     } catch (e) { handleErr(e); }
   });
   document.getElementById('keepMine').addEventListener('click', () => {
-    if (conflictMeta) doc.version = String(conflictMeta.version);
+    if (conflictMeta) doc.rev = revOf(conflictMeta);
     hideConflict(); saveToDrive(true);
   });
 
@@ -746,19 +924,31 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       if (!t) continue;
       blocks.push([WD_MAP[String(l.type || '').toLowerCase()] || 'action', t, 1]);
     }
+    const tp = TP_DEFAULT(), contact = [], draft = [];
     let title = '';
-    const tl = d.titlePage && Array.isArray(d.titlePage.lines)
-      ? d.titlePage.lines.find(l => l && l.type === 'Title' && typeof l.text === 'string' && l.text.trim()) : null;
-    if (tl) title = tl.text.trim();
-    else if (d.documentDetails && d.documentDetails['-'] && d.documentDetails['-'].title) title = d.documentDetails['-'].title;
-    return {title, blocks};
+    const tpLines = d.titlePage && Array.isArray(d.titlePage.lines) ? d.titlePage.lines : [];
+    const letters = x => x.toLowerCase().replace(/[^a-z]/g, '');
+    for (const l of tpLines) {
+      if (!l || typeof l.text !== 'string') continue;
+      const t = l.text.trim(), type = String(l.type || '').toLowerCase();
+      if (!t || letters(t) === letters(type)) continue;     // skip untouched placeholders like "Phone"
+      if (type === 'title') { if (!title) title = t; else if (!tp.author) tp.author = t; else draft.push(t); }
+      else if (type === 'author') tp.author = tp.author ? tp.author + ' & ' + t : t;
+      else if (/^(address|phone|e-?mail|contact|agent)$/.test(type)) contact.push(t);
+      else if (/\bby\s*$/i.test(t) && !tp.author) tp.credit = t.charAt(0).toUpperCase() + t.slice(1);
+      else if (/^(source|based ?on)$/.test(type)) tp.source = t;
+      else draft.push(t);
+    }
+    tp.contact = contact.join('\n'); tp.draft = draft.join('\n');
+    if (!title && d.documentDetails && d.documentDetails['-'] && d.documentDetails['-'].title) title = d.documentDetails['-'].title;
+    return {title, blocks, titlePage:tp};
   }
   async function importFile(file) {
     closePicker();
     let d;
     try { d = JSON.parse(await file.text()); } catch (e) { setStatus('That file isn’t a readable JSON file'); return; }
     let s = null;
-    if (d && d.app === 'script-editor' && Array.isArray(d.blocks)) s = {title:d.title || '', blocks:d.blocks};
+    if (d && d.app === 'script-editor' && Array.isArray(d.blocks)) s = {title:d.title || '', blocks:d.blocks, titlePage:d.titlePage};
     else if (d && Array.isArray(d.lines)) s = fromWriterDuet(d);
     if (!s || !s.blocks.length) { setStatus('Couldn’t find a script in that file'); return; }
     if (driveState === 'reconnect' && doc.dirty && hasContent(currentData())) {
@@ -771,7 +961,9 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     commitNow();
     titleEl.value = s.title || file.name.replace(/\.json$/i, '');
     render(s.blocks);
-    doc = {fileId:null, version:null, dirty:false};
+    titlePage = {...TP_DEFAULT(), ...(s.titlePage || {})};
+    renderTpCard();
+    doc = {fileId:null, rev:null, dirty:false};
     if (linked) resetHistory(); else commitNow();
     refreshUI(); window.scrollTo(0, 0);
     scheduleSave();
@@ -783,17 +975,46 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   const xmlEsc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   function toFdx(d) {
     const paras = [];
-    for (const [type, raw] of d.blocks) {
+    const STYLE = {b:'Bold', i:'Italic', u:'Underline', s:'Strikeout'};
+    for (const [type, raw, , fmt] of d.blocks) {
       if (type === 'note') continue;            // notes stay private, they'd print as script text
-      let t = raw.trim();
-      if (!t) continue;
-      if (CAPS.has(type)) t = t.toUpperCase();
-      if (type === 'paren' && !/^\(.*\)$/.test(t)) t = '(' + t.replace(/^\(|\)$/g, '') + ')';
-      paras.push(`    <Paragraph Type="${FDX_TYPE[type] || 'Action'}">\n      <Text>${xmlEsc(t)}</Text>\n    </Paragraph>`);
+      let runs = runsFrom(raw, fmt);
+      // trim spaces at either end without losing styles
+      while (runs.length && !runs[0].t.trim()) runs.shift();
+      while (runs.length && !runs[runs.length - 1].t.trim()) runs.pop();
+      if (!runs.length) continue;
+      runs[0] = {...runs[0], t:runs[0].t.replace(/^\s+/, '')};
+      runs[runs.length - 1] = {...runs[runs.length - 1], t:runs[runs.length - 1].t.replace(/\s+$/, '')};
+      if (CAPS.has(type)) runs = runs.map(r => ({...r, t:r.t.toUpperCase()}));
+      if (type === 'paren' && !/^\(.*\)$/.test(runsText(runs))) {
+        runs[0] = {...runs[0], t:runs[0].t.replace(/^\(/, '')};
+        runs[runs.length - 1] = {...runs[runs.length - 1], t:runs[runs.length - 1].t.replace(/\)$/, '')};
+        runs = [{t:'(', f:''}, ...runs, {t:')', f:''}];
+      }
+      const texts = mergeRuns(runs).map(r => r.f
+        ? `<Text Style="${r.f.split('').map(c => STYLE[c]).join('+')}">${xmlEsc(r.t)}</Text>`
+        : `<Text>${xmlEsc(r.t)}</Text>`).join('');
+      paras.push(`    <Paragraph Type="${FDX_TYPE[type] || 'Action'}">${texts}</Paragraph>`);
     }
     return '<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n' +
       '<FinalDraft DocumentType="Script" Template="No" Version="5">\n  <Content>\n' +
-      paras.join('\n') + '\n  </Content>\n</FinalDraft>\n';
+      paras.join('\n') + '\n  </Content>\n' + fdxTitlePage(d) + '</FinalDraft>\n';
+  }
+  function fdxTitlePage(d) {
+    const tp = d.titlePage || {}, title = d.title.trim();
+    const lines = s => (s || '').split('\n').map(x => x.trim()).filter(Boolean);
+    if (!title && !tp.author && !tp.source && !tp.contact && !tp.draft) return '';
+    const out = [];
+    const P = (t, al) => out.push(`      <Paragraph Alignment="${al}">\n        <Text>${xmlEsc(t)}</Text>\n      </Paragraph>`);
+    const gap = (n, al) => { for (let i = 0; i < n; i++) P('', al || 'Center'); };
+    gap(18);
+    if (title) P(title.toUpperCase(), 'Center');
+    if (tp.author) { gap(2); P(tp.credit || 'Written by', 'Center'); gap(1); lines(tp.author).forEach(a => P(a, 'Center')); }
+    if (tp.source) { gap(2); lines(tp.source).forEach(a => P(a, 'Center')); }
+    gap(Math.max(4, 50 - out.length), 'Left');
+    lines(tp.contact).forEach(c => P(c, 'Left'));
+    if (tp.draft) { gap(1, 'Right'); lines(tp.draft).forEach(c => P(c, 'Right')); }
+    return '  <TitlePage>\n    <Content>\n' + out.join('\n') + '\n    </Content>\n  </TitlePage>\n';
   }
   function downloadFdx() {
     const d = currentData();
@@ -828,9 +1049,18 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     const it = e.inputType;
     if (it === 'historyUndo') { e.preventDefault(); undo(); return; }
     if (it === 'historyRedo') { e.preventDefault(); redo(); return; }
+    const FMT = {formatBold:'b', formatItalic:'i', formatUnderline:'u', formatStrikeThrough:'s'};
+    if (FMT[it]) { e.preventDefault(); toggleFormat(FMT[it]); return; }
     if (e.isComposing) return;
     const ci = caretInfo(); if (!ci) return;
     if (it === 'insertParagraph' || it === 'insertLineBreak') { e.preventDefault(); splitAtCaret(); return; }
+    if (it === 'insertText' && ci.collapsed && e.data && pending && pending.block === ci.block && pending.off === ci.off) {
+      e.preventDefault();
+      const f = xorFlags(styleAt(readRuns(ci.block), ci.off), pending.toggle);
+      pending = null;
+      edit(() => insertAt(e.data, f));
+      return;
+    }
     if (it.startsWith('delete')) {
       if (!ci.collapsed) { if (ci.cross) { e.preventDefault(); edit(deleteSelection); } return; }
       const len = txt(ci.block).length;
@@ -870,6 +1100,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     if (e.key === 'Tab') { e.preventDefault(); cycleType(e.shiftKey ? -1 : 1); return; }
     if (mod && !e.altKey && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
     if (mod && !e.altKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+    if (mod && !e.altKey && !e.shiftKey && /^[biu]$/i.test(e.key)) { e.preventDefault(); toggleFormat(e.key.toLowerCase()); return; }
+    if (mod && e.shiftKey && !e.altKey && e.code === 'KeyX') { e.preventDefault(); toggleFormat('s'); return; }
     if (e.altKey && !mod && /^Digit[1-8]$/.test(e.code)) { e.preventDefault(); applyType(TYPES[+e.code.slice(5) - 1]); }
   });
 
@@ -895,6 +1127,9 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   typeBtns.forEach((btn, i) => { btn.title = `${LABELS[btn.dataset.type]} (${ALT}+${i + 1})`; });
   typeBtns.forEach(btn => { keepFocus(btn); btn.addEventListener('click', () => applyType(btn.dataset.type)); });
   keepFocus(undoBtn); keepFocus(redoBtn);
+  const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? 'Cmd' : 'Ctrl';
+  const FMT_TIP = {b:'Bold (' + MOD + '+B)', i:'Italic (' + MOD + '+I)', u:'Underline (' + MOD + '+U)', s:'Strikethrough (' + MOD + '+Shift+X)'};
+  fmtBtns.forEach(btn => { btn.title = FMT_TIP[btn.dataset.fmt]; keepFocus(btn); btn.addEventListener('click', () => toggleFormat(btn.dataset.fmt)); });
   undoBtn.addEventListener('click', undo);
   redoBtn.addEventListener('click', redo);
 
@@ -915,21 +1150,47 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     const linked = !!doc.fileId;
     commitNow();
     render([['scene', '', 0]]); titleEl.value = '';
-    doc = {fileId:null, version:null, dirty:false};
+    titlePage = {...TP_DEFAULT(), credit:titlePage.credit, author:titlePage.author, contact:titlePage.contact};
+    renderTpCard();
+    doc = {fileId:null, rev:null, dirty:false};
     if (linked) resetHistory(); else commitNow();
     editor.focus(); setCaret(editor.firstElementChild, 0);
     refreshUI(); saveLocal(); window.scrollTo(0, 0);
     if (driveState === 'on') setStatus('New script');
   });
 
-  titleEl.addEventListener('input', scheduleSave);
+  /* ---------- title page ---------- */
+  const tpSheet = document.getElementById('tpSheet');
+  const tpTitle = document.getElementById('tpTitle');
+  const tpFields = {credit:'tpCredit', author:'tpAuthor', source:'tpSource', contact:'tpContact', draft:'tpDraft'};
+  for (const k in tpFields) tpFields[k] = document.getElementById(tpFields[k]);
+  function renderTpCard() {
+    const t = titleEl.value.trim(), a = titlePage.author.trim();
+    document.getElementById('tpCardTitle').textContent = t;
+    document.getElementById('tpCardCredit').textContent = a ? (titlePage.credit.trim() || 'Written by') : '';
+    document.getElementById('tpCardAuthor').textContent = a;
+    document.getElementById('tpCardEmpty').hidden = !!(t || a);
+  }
+  function openTitlePage() {
+    tpTitle.value = titleEl.value;
+    for (const k in tpFields) tpFields[k].value = titlePage[k] || '';
+    tpSheet.hidden = false;
+  }
+  function closeTitlePage() { tpSheet.hidden = true; saveLocal(); }
+  tpTitle.addEventListener('input', () => { titleEl.value = tpTitle.value; renderTpCard(); scheduleSave(); });
+  for (const k in tpFields) tpFields[k].addEventListener('input', () => { titlePage[k] = tpFields[k].value; renderTpCard(); scheduleSave(); });
+  document.getElementById('tpCard').addEventListener('click', openTitlePage);
+  document.getElementById('tpDone').addEventListener('click', closeTitlePage);
+  tpSheet.addEventListener('click', e => { if (e.target === tpSheet) closeTitlePage(); });
+
+  titleEl.addEventListener('input', () => { renderTpCard(); scheduleSave(); });
   titleEl.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); const f = editor.firstElementChild; editor.focus(); setCaret(f, txt(f).length); }
   });
 
   // Tapping the empty page below the script continues writing at the end
   document.querySelector('main').addEventListener('click', e => {
-    if (editor.contains(e.target)) return;
+    if (editor.contains(e.target) || e.target.closest('.tp-card')) return;
     const last = editor.lastElementChild;
     editor.focus(); setCaret(last, txt(last).length); ensureVisible(last); refreshUI();
   });
@@ -953,10 +1214,11 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   const saved = load();
   if (saved) {
     titleEl.value = saved.title || ''; render(saved.blocks);
+    titlePage = {...TP_DEFAULT(), ...(saved.titlePage || {})};
     const d = saved.doc || {};
-    doc = {fileId:d.fileId || null, version:d.version || null, dirty:saved.doc ? !!d.dirty : true};
+    doc = {fileId:d.fileId || null, rev:d.rev || null, dirty:saved.doc ? (!!d.dirty || !d.rev) : true};
   } else render([['scene', '', 0]]);
-  commitNow(); updateUndo(); refreshUI();
+  commitNow(); updateUndo(); refreshUI(); renderTpCard();
   driveState = tokenValid() ? 'on' : (wasConnected() ? 'reconnect' : 'off');
   updateDriveUI();
   if (driveState === 'on') syncNow();
