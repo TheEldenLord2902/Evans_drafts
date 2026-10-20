@@ -56,6 +56,7 @@ header{
 #title::placeholder{color:var(--muted)}
 #title:focus{background:var(--pill)}
 #status{font-size:13px;color:var(--muted);white-space:nowrap}
+#pages{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 button{font-family:var(--ui);-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer}
 button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .icon{width:42px;height:42px;display:grid;place-items:center;border:0;background:transparent;color:var(--pill-ink);border-radius:10px;padding:0}
@@ -83,6 +84,7 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:10px 10px 10px 18px;border-bottom:1px solid var(--line)}
 .sheet-head h2{margin:0;font:600 17px var(--ui)}
 .list{overflow:auto;padding:6px}
+.sheet-actions{display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px;border-bottom:1px solid var(--line)}
 .sheet-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 10px 10px 18px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
 .sheet-foot span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .item{display:flex;align-items:baseline;justify-content:space-between;gap:12px;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);padding:13px 12px;border-radius:10px;font-size:16px}
@@ -121,6 +123,13 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 .el[data-type="scene"]{text-transform:uppercase;font-weight:700;margin-top:2.7em}
 .el[data-type="scene"]:first-child{margin-top:0}
 .el[data-type="character"]{text-transform:uppercase;margin-left:22ch}
+.el{--ind:0ch}
+.el[data-type="character"]{--ind:22ch}
+.el[data-type="paren"]{--ind:16ch}
+.el[data-type="dialogue"]{--ind:10ch}
+.el[data-pg]:not(.blank)::before{content:attr(data-pg);position:absolute;top:-.8em;left:calc(-1 * var(--ind) - 1.75em);width:calc(60ch + 3.5em);border-top:1px dashed var(--faint);padding:3px 0 0 4px;font:600 11px/1 var(--ui);color:var(--muted);pointer-events:none;text-align:left;font-style:normal;text-transform:none}
+.el[data-type="dialogue"][data-pg]:not(.blank),.el[data-type="paren"][data-pg]:not(.blank){margin-top:.9em}
+.el[data-type="character"].contd::after{content:" (CONT'D)";color:var(--muted)}
 .el[data-type="paren"]{margin:0 19ch 0 16ch}
 .el[data-type="dialogue"]{margin:0 15ch 0 10ch}
 .el[data-type="transition"]{text-transform:uppercase;text-align:right}
@@ -146,6 +155,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 <header>
   <div class="row">
     <input id="title" type="text" placeholder="Untitled script" aria-label="Script title" autocomplete="off" spellcheck="false">
+    <span id="pages"></span>
     <span id="hint"></span>
     <span id="status" aria-live="polite"></span>
     <button class="icon" id="undo" aria-label="Undo" title="Undo">
@@ -200,11 +210,12 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
     <div class="sheet-head">
       <h2 id="pickerTitle">Files</h2>
-      <span class="row" style="margin:0">
-        <button class="textbtn" id="importBtn">Import</button>
-        <button class="textbtn" id="exportBtn">Download FDX</button>
-        <button class="textbtn" id="closePicker">Close</button>
-      </span>
+      <button class="textbtn" id="closePicker">Close</button>
+    </div>
+    <div class="sheet-actions">
+      <button class="textbtn" id="importBtn">Import</button>
+      <button class="textbtn" id="pdfBtn">Download PDF</button>
+      <button class="textbtn" id="exportBtn">Download FDX</button>
     </div>
     <div class="list" id="pickerList"></div>
     <div class="sheet-foot" id="acctRow" hidden>
@@ -229,7 +240,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     </div>
   </div>
 </div>
-<input type="file" id="importInput" accept=".json,application/json" hidden>
+<input type="file" id="importInput" hidden>
 
 <script>
 (() => {
@@ -479,6 +490,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   function render(bl) {
     editor.replaceChildren(...bl.map(([t, x, m, f]) => makeBlock(t, x, m, f)));
     if (!editor.children.length) editor.append(makeBlock('scene', ''));
+    schedulePaginate();
   }
   function restore(s) {
     render(s.bl);
@@ -643,7 +655,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     blocks:blocks().map(serialBlock)});
   const hasContent = d => !!(d.title.trim() || d.blocks.some(b => b[1].trim()));
   function scheduleSave() {
-    doc.dirty = true; changeSeq++;
+    doc.dirty = true; changeSeq++; schedulePaginate();
     setStatus(driveState === 'on' ? 'Saving to Drive…' : 'Saving…');
     clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, 500);
     scheduleDrive();
@@ -986,13 +998,88 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     if (!title && d.documentDetails && d.documentDetails['-'] && d.documentDetails['-'].title) title = d.documentDetails['-'].title;
     return {title, blocks, titlePage:tp};
   }
+  /* Final Draft (.fdx) */
+  const FDX_IN = {'scene heading':'scene', action:'action', character:'character', parenthetical:'paren', dialogue:'dialogue',
+    transition:'transition', shot:'shot', general:'action'};
+  const FDX_FLAG = {bold:'b', italic:'i', underline:'u', strikeout:'s', strikethrough:'s'};
+  const kids = (el, name) => [...el.children].filter(c => c.localName === name);
+  function fdxRuns(p) {
+    return mergeRuns(kids(p, 'Text').map(t => ({
+      t:t.textContent.replace(/[\r\n\t]+/g, ' '),
+      f:normFlags(String(t.getAttribute('Style') || '').split('+').map(x => FDX_FLAG[x.trim().toLowerCase()] || '').join(''))
+    })));
+  }
+  function trimRuns(runs) {
+    runs = runs.filter(r => r.t);
+    while (runs.length && !runs[0].t.trim()) runs.shift();
+    while (runs.length && !runs[runs.length - 1].t.trim()) runs.pop();
+    if (!runs.length) return runs;
+    runs[0] = {...runs[0], t:runs[0].t.replace(/^\s+/, '')};
+    runs[runs.length - 1] = {...runs[runs.length - 1], t:runs[runs.length - 1].t.replace(/\s+$/, '')};
+    return runs;
+  }
+  function fromFdx(text) {
+    let x;
+    try { x = new DOMParser().parseFromString(text, 'application/xml'); } catch (e) { return null; }
+    const root = x.documentElement;
+    if (!root || root.localName !== 'FinalDraft' || x.getElementsByTagName('parsererror').length) return null;
+    const content = kids(root, 'Content')[0];
+    if (!content) return null;
+    const blocks = [];
+    const walk = el => {
+      for (const p of kids(el, 'Paragraph')) {
+        const dual = kids(p, 'DualDialogue');
+        if (dual.length) { dual.forEach(walk); continue; }
+        const runs = trimRuns(fdxRuns(p));
+        if (runs.length) {
+          const type = FDX_IN[String(p.getAttribute('Type') || '').toLowerCase()] || 'action';
+          blocks.push([type, runsText(runs), 1, fmtOf(runs)]);
+        }
+        // Final Draft script notes come in as Note lines
+        for (const n of kids(p, 'ScriptNote')) {
+          const t = n.textContent.replace(/\s+/g, ' ').trim();
+          if (t) blocks.push(['note', t, 1, 0]);
+        }
+      }
+    };
+    walk(content);
+    // title page: centred lines give title, credit, author; left lines contact; right lines draft
+    const tp = TP_DEFAULT(), contact = [], draft = [], centred = [];
+    const tpc = kids(root, 'TitlePage')[0];
+    const tpContent = tpc && kids(tpc, 'Content')[0];
+    if (tpContent) for (const p of tpContent.getElementsByTagName('Paragraph')) {
+      const t = runsText(trimRuns(fdxRuns(p)));
+      if (!t) continue;
+      const al = String(p.getAttribute('Alignment') || '').toLowerCase();
+      if (al === 'center') centred.push(t); else if (al === 'right') draft.push(t); else contact.push(t);
+    }
+    let title = centred.shift() || '';
+    const byAt = centred.findIndex(t => /\bby\s*$/i.test(t));
+    if (byAt >= 0) {
+      tp.credit = centred[byAt].charAt(0).toUpperCase() + centred[byAt].slice(1);
+      tp.author = centred[byAt + 1] || '';
+      centred.splice(byAt, 2);
+    }
+    const src = centred.findIndex(t => /^based on/i.test(t));
+    if (src >= 0) tp.source = centred.splice(src, 1)[0];
+    tp.contact = contact.join('\n'); tp.draft = [...centred, ...draft].join('\n');
+    if (title && title === title.toUpperCase()) title = title.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+    return blocks.length ? {title, blocks, titlePage:tp} : null;
+  }
   async function importFile(file) {
     closePicker();
-    let d;
-    try { d = JSON.parse(await file.text()); } catch (e) { setStatus('That file isn’t a readable JSON file'); return; }
+    let text;
+    try { text = await file.text(); } catch (e) { setStatus('Couldn’t read that file'); return; }
     let s = null;
-    if (d && d.app === 'script-editor' && Array.isArray(d.blocks)) s = {title:d.title || '', blocks:d.blocks, titlePage:d.titlePage};
-    else if (d && Array.isArray(d.lines)) s = fromWriterDuet(d);
+    if (/^\s*</.test(text)) {
+      s = fromFdx(text);
+      if (!s) { setStatus('That doesn’t look like a Final Draft (.fdx) file'); return; }
+    } else {
+      let d;
+      try { d = JSON.parse(text); } catch (e) { setStatus('Import works with .fdx files and WriterDuet .json files'); return; }
+      if (d && d.app === 'script-editor' && Array.isArray(d.blocks)) s = {title:d.title || '', blocks:d.blocks, titlePage:d.titlePage};
+      else if (d && Array.isArray(d.lines)) s = fromWriterDuet(d);
+    }
     if (!s || !s.blocks.length) { setStatus('Couldn’t find a script in that file'); return; }
     if (driveState === 'reconnect' && doc.dirty && hasContent(currentData())) {
       setStatus('Reconnect Drive first so the current script is saved'); return;
@@ -1002,7 +1089,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     }
     const linked = !!doc.fileId;
     commitNow();
-    titleEl.value = s.title || file.name.replace(/\.json$/i, '');
+    titleEl.value = s.title || file.name.replace(/\.(json|fdx)$/i, '');
     render(s.blocks);
     titlePage = {...TP_DEFAULT(), ...(s.titlePage || {})};
     renderTpCard();
@@ -1011,6 +1098,241 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     refreshUI(); window.scrollTo(0, 0);
     scheduleSave();
   }
+  /* ---------- pages: A4, Courier 12, industry layout ---------- */
+  const PAGE = {w:595.28, h:841.89, left:108, top:72, lines:57, cols:57, cw:7.2, lh:12};
+  const SPEC = {scene:{x:0, w:57}, action:{x:0, w:57}, shot:{x:0, w:57}, character:{x:22, w:35},
+    dialogue:{x:10, w:35}, paren:{x:16, w:23}, transition:{x:0, w:57, align:'right'}};
+  const SPACE_BEFORE = {scene:1, action:1, shot:1, character:1, transition:1};
+  const ENDS_SENTENCE = /[.!?…]["'’”)\]]*$/;
+  function wrapRanges(text, width) {
+    const out = []; let i = 0; const n = text.length;
+    while (i < n) {
+      while (i < n && text[i] === ' ') i++;
+      if (i >= n) break;
+      if (n - i <= width) { out.push([i, n]); break; }
+      let cut = -1;
+      for (let j = i + width; j > i; j--) if (text[j] === ' ') { cut = j; break; }
+      if (cut <= i) { out.push([i, i + width]); i += width; } else { out.push([i, cut]); i = cut + 1; }
+    }
+    return out.map(([a, b]) => { while (b > a && text[b - 1] === ' ') b--; return [a, b]; });
+  }
+  function linesFor(type, runs) {
+    const sp = SPEC[type] || SPEC.action, text = runsText(runs);
+    const hang = type === 'paren' ? 1 : 0;   // wrapped parenthetical lines sit one space in
+    return wrapRanges(text, sp.w - hang).map(([a, b], i) => ({
+      x:sp.x + (i ? hang : 0), runs:sliceRuns(runs, a, b), align:sp.align || 'left', type,
+      ends:ENDS_SENTENCE.test(text.slice(a, b))
+    }));
+  }
+  const speakerOf = name => name.replace(/\s*\([^)]*\)/g, '').trim().toUpperCase();
+  // Turn the script into printable items; also returns which character lines get an automatic (CONT'D)
+  function layoutScript(bl) {
+    const items = [], contd = new Set();
+    let last = null;
+    for (let i = 0; i < bl.length; i++) {
+      const [type, text, , fmt] = bl[i];
+      if (type === 'note') continue;
+      let runs = trimRuns(runsFrom(text, fmt));
+      if (!runs.length) continue;
+      if (CAPS.has(type)) runs = runs.map(r => ({...r, t:r.t.toUpperCase()}));
+      if (type === 'scene') { last = null; runs = runs.map(r => ({...r, f:normFlags(r.f + 'b')})); }
+      if (type === 'character') {
+        const name = runsText(runs), who = speakerOf(name);
+        if (who && who === last && !/\(CONT'?D\)/i.test(name)) { contd.add(i); runs = [...runs, {t:" (CONT'D)", f:''}]; }
+        last = who || last;
+        const body = []; let j = i + 1;
+        for (; j < bl.length && (bl[j][0] === 'paren' || bl[j][0] === 'dialogue' || bl[j][0] === 'note'); j++) {
+          if (bl[j][0] === 'note') continue;
+          let r = trimRuns(runsFrom(bl[j][1], bl[j][3]));
+          if (r.length && bl[j][0] === 'paren' && !/^\(.*\)$/.test(runsText(r))) {
+            r[0] = {...r[0], t:r[0].t.replace(/^\(/, '')};
+            r[r.length - 1] = {...r[r.length - 1], t:r[r.length - 1].t.replace(/\)$/, '')};
+            r = [{t:'(', f:''}, ...r, {t:')', f:''}];
+          }
+          if (r.length) body.push(...linesFor(bl[j][0], r));
+        }
+        items.push({kind:'speech', bi:i, sb:1, head:linesFor('character', runs)[0], name:runs, body});
+        i = j - 1;
+        continue;
+      }
+      items.push({kind:'block', bi:i, type, sb:SPACE_BEFORE[type] || 0, lines:linesFor(type, runs)});
+    }
+    return {items, contd};
+  }
+  function bestSplit(lines, avail) {
+    const max = Math.min(avail, lines.length - 2);
+    if (max < 2) return 0;
+    for (let k = max; k >= 2; k--) if (lines[k - 1].ends) return k;
+    return max;
+  }
+  function speechSplit(lines, avail) {
+    const max = Math.min(avail, lines.length - 1);
+    let fallback = 0;
+    for (let k = max; k >= 1; k--) {
+      if (lines[k - 1].type === 'paren') continue;           // never end a page on a parenthetical
+      if (lines[k - 1].ends) return k;
+      if (!fallback) fallback = k;
+    }
+    return fallback;
+  }
+  function paginate(items) {
+    const L = PAGE.lines, pages = [[]], starts = [];
+    let used = 0;
+    const put = l => { pages[pages.length - 1].push(l); used++; };
+    const gap = n => { for (let k = 0; k < n; k++) put(null); };
+    const newPage = bi => { pages.push([]); used = 0; starts.push(bi); };
+    const need = it => it ? it.sb + (it.kind === 'speech' ? 1 + Math.min(2, it.body.length) : Math.min(2, it.lines.length)) : 0;
+    for (let idx = 0; idx < items.length; idx++) {
+      const it = items[idx];
+      if (it.kind === 'block') {
+        let lines = it.lines, sb = used ? it.sb : 0;
+        if ((it.type === 'scene' || it.type === 'shot') && used && used + sb + lines.length + need(items[idx + 1]) > L) { newPage(it.bi); sb = 0; }
+        if (used + sb + lines.length <= L) { gap(sb); lines.forEach(put); continue; }
+        if (it.type !== 'action') { if (used) newPage(it.bi); lines.forEach(put); continue; }
+        while (lines.length) {
+          sb = used ? it.sb : 0;
+          if (used + sb + lines.length <= L) { gap(sb); lines.forEach(put); break; }
+          let k = bestSplit(lines, L - used - sb);
+          if (!k && !used) k = Math.min(L, lines.length);
+          if (k) { gap(sb); lines.slice(0, k).forEach(put); lines = lines.slice(k); }
+          newPage(it.bi);
+        }
+        continue;
+      }
+      let body = it.body, head = it.head, sb = used ? it.sb : 0;
+      while (true) {
+        if (!used) sb = 0;
+        if (used + sb + 1 + body.length <= L) { gap(sb); put(head); body.forEach(put); break; }
+        let k = speechSplit(body, L - used - sb - 2);
+        if (k && k < 2 && body.length > 2 && used) k = 0;   // avoid a lone line before (MORE)
+        if (k) {
+          gap(sb); put(head); body.slice(0, k).forEach(put);
+          put({x:SPEC.character.x, runs:[{t:'(MORE)', f:''}], align:'left', type:'more'});
+          body = body.slice(k);
+          const nm = runsText(it.name);
+          head = {...head, runs:/\(CONT'?D\)\s*$/i.test(nm) ? it.name : [...it.name, {t:" (CONT'D)", f:''}]};
+          newPage(it.bi); continue;
+        }
+        if (used) { newPage(it.bi); continue; }
+        put(head); body.forEach(put); break;                 // a single speech longer than a page
+      }
+    }
+    if (pages.length > 1 && !pages[pages.length - 1].length) { pages.pop(); starts.pop(); }
+    return {pages, starts};
+  }
+
+  // Page markers and CONT'D shown while writing
+  let pgTimer = null;
+  function schedulePaginate() { clearTimeout(pgTimer); pgTimer = setTimeout(repaginate, 400); }
+  function repaginate() {
+    const els = blocks();
+    const {items, contd} = layoutScript(els.map(serialBlock));
+    const {pages, starts} = paginate(items);
+    const first = new Map();
+    starts.forEach((bi, p) => { if (!first.has(bi)) first.set(bi, p + 2); });
+    els.forEach((b, i) => {
+      if (first.has(i)) b.dataset.pg = 'Page ' + first.get(i); else delete b.dataset.pg;
+      b.classList.toggle('contd', contd.has(i));
+    });
+    const n = hasContent(currentData()) ? pages.length : 0;
+    document.getElementById('pages').textContent = n ? n + (n === 1 ? ' page' : ' pages') : '';
+  }
+
+  /* ---------- PDF ---------- */
+  const WIN = {'€':0x80,'‚':0x82,'ƒ':0x83,'„':0x84,'…':0x85,'†':0x86,'‡':0x87,'ˆ':0x88,'‰':0x89,'Š':0x8a,'‹':0x8b,'Œ':0x8c,'Ž':0x8e,
+    '‘':0x91,'’':0x92,'“':0x93,'”':0x94,'•':0x95,'–':0x96,'—':0x97,'˜':0x98,'™':0x99,'š':0x9a,'›':0x9b,'œ':0x9c,'ž':0x9e,'Ÿ':0x9f};
+  function pdfStr(t) {
+    let out = '';
+    for (const ch of t) {
+      const c = ch.codePointAt(0);
+      const b = WIN[ch] || (c < 128 || (c >= 0xa0 && c <= 0xff) ? c : 0x3f);
+      out += b === 0x28 || b === 0x29 || b === 0x5c ? '\\' + String.fromCharCode(b) : String.fromCharCode(b);
+    }
+    return out;
+  }
+  function drawLines(lines, pageNo) {
+    const ops = [];
+    const fontOf = f => 'F' + (1 + (f.includes('b') ? 1 : 0) + (f.includes('i') ? 2 : 0));
+    lines.forEach((l, i) => {
+      if (!l) return;
+      const y = PAGE.h - PAGE.top - (i + 1) * PAGE.lh + 2.6;
+      const len = runsText(l.runs).length;
+      let col = l.align === 'right' ? PAGE.cols - len : l.align === 'center' ? (PAGE.w / 2 - PAGE.left) / PAGE.cw - len / 2 : l.x;
+      for (const r of l.runs) {
+        const x = (PAGE.left + col * PAGE.cw).toFixed(2), x2 = (PAGE.left + (col + r.t.length) * PAGE.cw).toFixed(2);
+        ops.push(`BT /${fontOf(r.f)} 12 Tf ${x} ${y.toFixed(2)} Td (${pdfStr(r.t)}) Tj ET`);
+        if (r.f.includes('u')) ops.push(`0.6 w ${x} ${(y - 1.6).toFixed(2)} m ${x2} ${(y - 1.6).toFixed(2)} l S`);
+        if (r.f.includes('s')) ops.push(`0.6 w ${x} ${(y + 3.4).toFixed(2)} m ${x2} ${(y + 3.4).toFixed(2)} l S`);
+        col += r.t.length;
+      }
+    });
+    if (pageNo > 1) {
+      const t = pageNo + '.', x = (PAGE.w - 72 - t.length * PAGE.cw).toFixed(2);
+      ops.push(`BT /F1 12 Tf ${x} ${(PAGE.h - 36 - 9).toFixed(2)} Td (${t}) Tj ET`);
+    }
+    return ops.join('\n');
+  }
+  function titlePageLines(d) {
+    const tp = d.titlePage || {}, L = PAGE.lines, lines = new Array(L).fill(null);
+    const split = s => (s || '').split('\n').map(x => x.trim()).filter(Boolean);
+    const at = (i, t, align) => { if (i >= 0 && i < L) lines[i] = {x:0, runs:[{t, f:''}], align}; };
+    let i = 18;
+    if (d.title.trim()) { at(i, d.title.trim().toUpperCase(), 'center'); i += 3; }
+    if (tp.author && tp.author.trim()) { at(i, tp.credit || 'Written by', 'center'); i += 2; split(tp.author).forEach(a => at(i++, a, 'center')); i += 2; }
+    split(tp.source).forEach(a => at(i++, a, 'center'));
+    const contact = split(tp.contact), draft = split(tp.draft);
+    contact.forEach((c, k) => at(L - contact.length + k, c, 'left'));
+    draft.forEach((c, k) => { const row = L - draft.length + k; if (!lines[row]) at(row, c, 'right'); else at(row - contact.length - 1, c, 'right'); });
+    return lines;
+  }
+  function buildPdf(d) {
+    const {items} = layoutScript(d.blocks);
+    const {pages} = paginate(items);
+    const tp = d.titlePage || {};
+    const streams = [];
+    if (d.title.trim() || (tp.author || '').trim()) streams.push(drawLines(titlePageLines(d), 0));
+    pages.forEach((p, n) => streams.push(drawLines(p, n + 1)));
+    const objs = [];
+    const add = body => { objs.push(body); return objs.length; };
+    add('<< /Type /Catalog /Pages 2 0 R >>');
+    add('PAGES');
+    const fonts = ['Courier', 'Courier-Bold', 'Courier-Oblique', 'Courier-BoldOblique']
+      .map(f => add(`<< /Type /Font /Subtype /Type1 /BaseFont /${f} /Encoding /WinAnsiEncoding >>`));
+    const res = `<< /Font << ${fonts.map((n, k) => `/F${k + 1} ${n} 0 R`).join(' ')} >> >>`;
+    const kidsRef = [];
+    for (const st of streams) {
+      const c = add(`<< /Length ${st.length} >>\nstream\n${st}\nendstream`);
+      kidsRef.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE.w} ${PAGE.h}] /Resources ${res} /Contents ${c} 0 R >>`));
+    }
+    objs[1] = `<< /Type /Pages /Kids [${kidsRef.map(k => k + ' 0 R').join(' ')}] /Count ${kidsRef.length} >>`;
+    const info = add(`<< /Title (${pdfStr(d.title.trim() || 'Untitled script')}) /Producer (Script Editor) >>`);
+    let out = '%PDF-1.4\n%\xe2\xe3\xcf\xd3\n';
+    const offs = [];
+    objs.forEach((o, k) => { offs.push(out.length); out += `${k + 1} 0 obj\n${o}\nendobj\n`; });
+    const xref = out.length;
+    out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('');
+    out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R /Info ${info} 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+    const bytes = new Uint8Array(out.length);
+    for (let k = 0; k < out.length; k++) bytes[k] = out.charCodeAt(k) & 0xff;
+    return bytes;
+  }
+  function saveBlob(bytes, name, type) {
+    const url = URL.createObjectURL(new Blob([bytes], {type}));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 20000);
+  }
+  function downloadPdf() {
+    const d = currentData();
+    if (!hasContent(d)) { setStatus('Nothing to download yet'); return; }
+    const name = (d.title.trim() || 'Untitled script').replace(/[\\/:*?"<>|]+/g, '-') + '.pdf';
+    saveBlob(buildPdf(d), name, 'application/pdf');
+    closePicker();
+  }
+  document.getElementById('pdfBtn').addEventListener('click', downloadPdf);
+  window.__script = {layoutScript, paginate, buildPdf};   // handy for checking layouts from the console
+
   /* ---------- export to Final Draft (.fdx) ---------- */
   const FDX_TYPE = {scene:'Scene Heading', action:'Action', character:'Character', paren:'Parenthetical',
     dialogue:'Dialogue', transition:'Transition', shot:'Shot'};
