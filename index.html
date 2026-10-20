@@ -83,6 +83,8 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:10px 10px 10px 18px;border-bottom:1px solid var(--line)}
 .sheet-head h2{margin:0;font:600 17px var(--ui)}
 .list{overflow:auto;padding:6px}
+.sheet-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 10px 10px 18px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+.sheet-foot span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .item{display:flex;align-items:baseline;justify-content:space-between;gap:12px;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);padding:13px 12px;border-radius:10px;font-size:16px}
 .item:hover,.item:active{background:var(--pill)}
 .item.current span{font-weight:600}
@@ -205,6 +207,10 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       </span>
     </div>
     <div class="list" id="pickerList"></div>
+    <div class="sheet-foot" id="acctRow" hidden>
+      <span id="acctName">Connected to Google Drive</span>
+      <button class="textbtn" id="disconnect">Disconnect</button>
+    </div>
   </div>
 </div>
 <div class="overlay" id="tpSheet" hidden>
@@ -706,7 +712,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
         } else rej({denied:true});
       };
       onTokenErr = e => rej(e || {});
-      tokenClient.requestAccessToken({prompt: wasConnected() ? '' : 'consent'});
+      tokenClient.requestAccessToken({prompt: wasConnected() ? '' : 'select_account consent'});
     });
   }
 
@@ -866,8 +872,45 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   const fmtDate = s => new Date(s).toLocaleString('en-GB', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
   const pickerMsg = t => { const p = document.createElement('p'); p.className = 'empty'; p.textContent = t; return p; };
   function closePicker() { picker.hidden = true; }
+
+  /* ---------- which Google account, and switching accounts ---------- */
+  const ACCT_KEY = 'script-editor:account';
+  const acctRow = document.getElementById('acctRow'), acctName = document.getElementById('acctName');
+  async function showAccount() {
+    acctRow.hidden = driveState !== 'on';
+    if (driveState !== 'on') return;
+    let email = '';
+    try { email = sessionStorage.getItem(ACCT_KEY) || ''; } catch (e) {}
+    if (!email) {
+      try {
+        const r = await api(`${API}/about?fields=user(emailAddress)`);
+        if (r.ok) { email = ((await r.json()).user || {}).emailAddress || ''; try { sessionStorage.setItem(ACCT_KEY, email); } catch (e) {} }
+      } catch (e) {}
+    }
+    acctName.textContent = email ? 'Drive: ' + email : 'Connected to Google Drive';
+  }
+  async function disconnect() {
+    pickerList.replaceChildren(pickerMsg('Saving before you disconnect…'));
+    if (!(await flushCurrent())) {
+      pickerList.replaceChildren(pickerMsg('Couldn’t save the current script to Drive, so you’re still connected. Check your connection and try again.'));
+      return;
+    }
+    if (conflict) { closePicker(); return; }
+    try { if (token && window.google) google.accounts.oauth2.revoke(token, () => {}); } catch (e) {}
+    token = null; tokenExp = 0; folderCache = null;
+    try { sessionStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(ACCT_KEY); localStorage.removeItem(CONN_KEY); } catch (e) {}
+    driveState = 'off'; updateDriveUI();
+    // clear this device's copy so nothing from this account is saved into the next one
+    render([['scene', '', 0]]); titleEl.value = ''; titlePage = TP_DEFAULT(); renderTpCard();
+    doc = {fileId:null, rev:null, dirty:false};
+    resetHistory(); refreshUI(); saveLocal();
+    closePicker(); window.scrollTo(0, 0);
+    setStatus('Disconnected from Drive');
+  }
+  document.getElementById('disconnect').addEventListener('click', disconnect);
   async function openPicker() {
     picker.hidden = false;
+    showAccount();
     if (driveState !== 'on') {
       pickerList.replaceChildren(pickerMsg('Connect Drive to see your saved scripts here. You can still import a file.'));
       return;
