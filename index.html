@@ -101,6 +101,64 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .form label small{font-weight:400}
 .form input,.form textarea{width:100%;font:16px/1.35 var(--ui);color:var(--ink);background:var(--pill);border:1px solid transparent;border-radius:10px;padding:10px 12px;resize:vertical}
 .form input:focus,.form textarea:focus{outline:none;border-color:var(--brass)}
+.findbar{flex-wrap:wrap}
+.findbar input{flex:1 1 160px;min-width:0;height:40px;font:16px var(--ui);color:var(--ink);background:var(--pill);border:1px solid transparent;border-radius:10px;padding:0 12px}
+.findbar input:focus{outline:none;border-color:var(--brass)}
+#findCount{font-size:13px;color:var(--muted);min-width:5.5em;text-align:center;font-variant-numeric:tabular-nums}
+::highlight(find){background:rgba(217,184,106,.35)}
+::highlight(find-now){background:#d9b86a;color:#1b1d21}
+.sheet.wide{max-width:760px;max-height:80vh}
+.panel-body{padding:8px 14px 18px}
+.panel-body h3{font:600 15px var(--ui);margin:16px 4px 8px}
+.panel-body h3:first-child{margin-top:6px}
+.panel-body p{margin:6px 4px;color:var(--muted);font-size:14px;line-height:1.4}
+.tbl{overflow-x:auto}
+.tbl table{border-collapse:collapse;width:100%;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th{color:var(--muted);font-weight:500}
+.tbl td.num,.tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
+.scene-row{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line)}
+.scene-row .item{flex:1;min-width:0;font-family:var(--mono);font-size:14px}
+.scene-row .item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase}
+.scene-row .icon:disabled{opacity:.25}
+.draft-new{display:flex;gap:8px;margin:4px 4px 10px}
+.draft-new input{flex:1;min-width:0;height:42px;font:16px var(--ui);color:var(--ink);background:var(--pill);border:1px solid transparent;border-radius:10px;padding:0 12px}
+.draft-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.draft-row .meta{flex:1 1 200px;min-width:0}
+.draft-row .meta b{display:block;font-weight:600}
+.draft-row .meta small{color:var(--muted)}
+.diff{font:13px/1.45 var(--mono);margin:4px}
+.diff div{padding:2px 8px;border-radius:4px;white-space:pre-wrap}
+.diff .add{background:rgba(46,160,67,.16)}
+.diff .del{background:rgba(207,34,46,.14);text-decoration:line-through;color:var(--muted)}
+.diff .gap{color:var(--muted);font-family:var(--ui);font-style:italic}
+.diff .t{display:inline-block;min-width:6.5em;color:var(--muted);font-family:var(--ui);font-size:12px}
+.suggest{position:fixed;z-index:30;min-width:200px;max-width:min(380px, 90vw);background:var(--page);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:4px}
+.suggest button{display:block;width:100%;text-align:left;padding:9px 12px;border:0;background:transparent;color:var(--ink);border-radius:7px;font:15px var(--mono);text-transform:uppercase}
+.suggest button[aria-selected="true"]{background:var(--pill)}
+.rail{position:fixed;top:0;height:100%;width:var(--rail);z-index:20;display:flex;flex-direction:column;gap:8px;
+  padding:calc(env(safe-area-inset-top, 0px) + 10px) 8px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  background:var(--bar);-webkit-backdrop-filter:saturate(1.3) blur(14px);backdrop-filter:saturate(1.3) blur(14px);
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+#railL{left:0;padding-left:max(8px, env(safe-area-inset-left, 0px));border-right:1px solid var(--line)}
+#railR{right:0;padding-right:max(8px, env(safe-area-inset-right, 0px));border-left:1px solid var(--line)}
+.rail > *{flex:none}
+.rail .rail-label{font:500 12px var(--ui);color:var(--muted);margin:6px 2px -2px}
+.rail .pair{display:flex;justify-content:space-between;gap:4px}
+.rail .pair .icon{flex:1}
+.rail .fmt{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0;margin:0;border:0}
+.rail .fmt .icon{width:auto}
+.rail .types{flex-direction:column;overflow:visible;gap:6px}
+.rail .type{width:100%;padding:0 6px;font-size:13px;border-radius:12px}
+.rail .textbtn{width:100%;height:auto;min-height:42px;padding:6px;font-size:14px;line-height:1.2;white-space:normal}
+.rail .textbtn.tool-b{font-size:13px;min-height:38px}
+.rail #title{flex:none;width:100%;font-size:15px;padding:9px 8px;background:var(--pill);white-space:nowrap;text-overflow:ellipsis}
+.rail #pages,.rail #status{display:block;white-space:normal;text-align:center;font-size:12px;line-height:1.35}
+.rail #fullBtn{width:100%}
+html.rails{--rail:112px;--fs:min(17px, calc((100vw - 2 * var(--rail) - 24px) / 39.5))}
+html.rails main{padding-left:calc(var(--rail) + 12px);padding-right:calc(var(--rail) + 12px)}
+html.rails header{left:var(--rail);right:var(--rail)}
+html.rails #hint{display:none}
 main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px 0}
 .page{
   position:relative;font-size:var(--fs);font-family:var(--mono);
@@ -130,6 +188,9 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 .el[data-pg]:not(.blank)::before{content:attr(data-pg);position:absolute;top:-.8em;left:calc(-1 * var(--ind) - 1.75em);width:calc(60ch + 3.5em);border-top:1px dashed var(--faint);padding:3px 0 0 4px;font:600 11px/1 var(--ui);color:var(--muted);pointer-events:none;text-align:left;font-style:normal;text-transform:none}
 .el[data-type="dialogue"][data-pg]:not(.blank),.el[data-type="paren"][data-pg]:not(.blank){margin-top:.9em}
 .el[data-type="character"].contd::after{content:" (CONT'D)";color:var(--muted)}
+.el.dual{background:rgba(168,130,58,.12);border-radius:3px}
+.el[data-type="scene"][data-sn]::after{content:attr(data-sn);position:absolute;top:0;right:-1.6em;font-weight:400;color:var(--muted)}
+.el[data-type="scene"][data-sn]{padding-right:.2em}
 .el[data-type="paren"]{margin:0 19ch 0 16ch}
 .el[data-type="dialogue"]{margin:0 15ch 0 10ch}
 .el[data-type="transition"]{text-transform:uppercase;text-align:right}
@@ -153,7 +214,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 </head>
 <body>
 <header>
-  <div class="row">
+  <div class="row" id="rowMain">
     <input id="title" type="text" placeholder="Untitled script" aria-label="Script title" autocomplete="off" spellcheck="false">
     <span id="pages"></span>
     <span id="hint"></span>
@@ -165,15 +226,27 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
     </button>
     <button class="textbtn" id="open">Files</button>
+    <button class="textbtn" id="toolsBtn">Tools</button>
     <button class="textbtn" id="new">New</button>
     <button class="textbtn primary" id="drive">Connect Drive</button>
+    <button class="icon" id="fullBtn" aria-label="Full screen" title="Full screen" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+  </div>
+  <div class="row findbar" id="findBar" hidden>
+    <input id="findIn" type="search" placeholder="Find" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Find">
+    <input id="replIn" type="text" placeholder="Replace with" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Replace with">
+    <span id="findCount"></span>
+    <button class="icon" id="findPrev" aria-label="Previous match"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>
+    <button class="icon" id="findNext" aria-label="Next match"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="textbtn" id="replOne">Replace</button>
+    <button class="textbtn" id="replAll">Replace all</button>
+    <button class="textbtn" id="findClose">Done</button>
   </div>
   <div class="row notice" id="conflict" hidden>
     <span>This script was changed on another device.</span>
     <button class="textbtn" id="useDrive">Use Drive version</button>
     <button class="textbtn" id="keepMine">Keep this version</button>
   </div>
-  <div class="row">
+  <div class="row" id="rowTypes">
     <div class="fmt" role="toolbar" aria-label="Text style">
       <button class="icon" data-fmt="b" aria-label="Bold" aria-pressed="false"><b>B</b></button>
       <button class="icon" data-fmt="i" aria-label="Italic" aria-pressed="false"><i style="font-family:Georgia,serif">I</i></button>
@@ -192,6 +265,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     </div>
   </div>
 </header>
+<nav class="rail" id="railL" aria-label="Writing tools" hidden></nav>
+<aside class="rail" id="railR" aria-label="Script and files" hidden></aside>
 
 <main>
   <button class="tp-card" id="tpCard" type="button" aria-label="Edit title page">
@@ -216,6 +291,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       <button class="textbtn" id="importBtn">Import</button>
       <button class="textbtn" id="pdfBtn">Download PDF</button>
       <button class="textbtn" id="exportBtn">Download FDX</button>
+      <button class="textbtn" id="fountainBtn">Download Fountain</button>
     </div>
     <div class="list" id="pickerList"></div>
     <div class="sheet-foot" id="acctRow" hidden>
@@ -240,6 +316,27 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     </div>
   </div>
 </div>
+<div class="overlay" id="toolsSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="toolsHead">
+    <div class="sheet-head"><h2 id="toolsHead">Tools</h2><button class="textbtn" id="toolsClose">Close</button></div>
+    <div class="list">
+      <button class="item tool" data-tool="find"><span>Find and replace</span><small id="findKey"></small></button>
+      <button class="item tool" data-tool="scenes"><span>Scenes</span><small>Jump to or reorder</small></button>
+      <button class="item tool" data-tool="reports"><span>Reports</span><small>Characters, places, scenes</small></button>
+      <button class="item tool" data-tool="drafts"><span>Drafts</span><small>Save and compare versions</small></button>
+      <button class="item tool" data-tool="dual"><span>Dual dialogue</span><small>Pair this speech with the one before</small></button>
+      <button class="item tool" data-tool="numbers"><span>Scene numbers</span><small id="snState">Off</small></button>
+      <button class="item tool" data-tool="rails"><span>Side toolbars</span><small id="railState">Off</small></button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="panel" hidden>
+  <div class="sheet wide" role="dialog" aria-modal="true" aria-labelledby="panelHead">
+    <div class="sheet-head"><h2 id="panelHead"></h2><button class="textbtn" id="panelClose">Close</button></div>
+    <div class="list panel-body" id="panelBody"></div>
+  </div>
+</div>
+<div class="suggest" id="suggest" role="listbox" aria-label="Suggestions" hidden></div>
 <input type="file" id="importInput" hidden>
 
 <script>
@@ -361,7 +458,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     setRuns(b, runsFrom(text, fmt));
     return b;
   }
-  const serialBlock = b => { const r = readRuns(b); return [b.dataset.type, runsText(r), b.dataset.manual ? 1 : 0, fmtOf(r)]; };
+  const serialBlock = b => { const r = readRuns(b); return [b.dataset.type, runsText(r), b.dataset.manual ? 1 : 0, fmtOf(r), b.dataset.dual ? 1 : 0]; };
 
   /* ---------- caret ---------- */
   let savedRange = null;
@@ -488,7 +585,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   }
   function scheduleCommit() { clearTimeout(commitTimer); commitTimer = setTimeout(commitNow, 800); }
   function render(bl) {
-    editor.replaceChildren(...bl.map(([t, x, m, f]) => makeBlock(t, x, m, f)));
+    editor.replaceChildren(...bl.map(([t, x, m, f, dd]) => { const b = makeBlock(t, x, m, f); if (dd && t === 'character') b.dataset.dual = '1'; return b; }));
     if (!editor.children.length) editor.append(makeBlock('scene', ''));
     schedulePaginate();
   }
@@ -641,6 +738,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       const base = 'Return gives ' + LABELS[atEnd ? ENTER_NEXT[type] : type];
       hintEl.textContent = matchMedia('(pointer: fine)').matches ? base + ', Tab changes type' : base;
     } else hintEl.textContent = '';
+    updateSuggest();
   }
 
   /* ---------- saving on this device ---------- */
@@ -651,7 +749,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   const setStatus = s => { statusEl.textContent = s; };
   const TP_DEFAULT = () => ({credit:'Written by', author:'', source:'', contact:'', draft:''});
   let titlePage = TP_DEFAULT();
-  const currentData = () => ({app:'script-editor', v:1, title:titleEl.value, titlePage:{...titlePage},
+  let settings = {sceneNumbers:false}, drafts = [];
+  const currentData = () => ({app:'script-editor', v:1, title:titleEl.value, titlePage:{...titlePage}, settings:{...settings}, drafts,
     blocks:blocks().map(serialBlock)});
   const hasContent = d => !!(d.title.trim() || d.blocks.some(b => b[1].trim()));
   function scheduleSave() {
@@ -663,7 +762,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   function saveLocal() {
     clearTimeout(saveTimer);
     const d = currentData();
-    const data = {v:1, title:d.title, titlePage:d.titlePage, blocks:d.blocks, doc, savedAt:Date.now()};
+    const data = {v:1, title:d.title, titlePage:d.titlePage, settings:d.settings, drafts:d.drafts, blocks:d.blocks, doc, savedAt:Date.now()};
     try { localStorage.setItem(KEY, JSON.stringify(data)); if (driveState !== 'on') setStatus('Saved on this device'); }
     catch (e) { if (driveState !== 'on') setStatus('Not saved: this browser blocks storage'); }
   }
@@ -831,6 +930,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     if (keepHistory) commitNow();
     titleEl.value = data.title || '';
     titlePage = {...TP_DEFAULT(), ...(data.titlePage || {})};
+    settings = {sceneNumbers:false, ...(data.settings || {})}; drafts = Array.isArray(data.drafts) ? data.drafts : [];
     render(data.blocks); renderTpCard();
     doc = {fileId:meta.id, rev:revOf(meta), dirty:false};
     if (keepHistory) { commitNow(); updateUndo(); } else resetHistory();
@@ -913,7 +1013,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     try { sessionStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(ACCT_KEY); localStorage.removeItem(CONN_KEY); } catch (e) {}
     driveState = 'off'; updateDriveUI();
     // clear this device's copy so nothing from this account is saved into the next one
-    render([['scene', '', 0]]); titleEl.value = ''; titlePage = TP_DEFAULT(); renderTpCard();
+    render([['scene', '', 0]]); titleEl.value = ''; titlePage = TP_DEFAULT(); settings = {sceneNumbers:false}; drafts = []; renderTpCard();
     doc = {fileId:null, rev:null, dirty:false};
     resetHistory(); refreshUI(); saveLocal();
     closePicker(); window.scrollTo(0, 0);
@@ -1026,14 +1126,16 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     const content = kids(root, 'Content')[0];
     if (!content) return null;
     const blocks = [];
-    const walk = el => {
+    const walk = (el, inDual) => {
+      let chars = 0;
       for (const p of kids(el, 'Paragraph')) {
         const dual = kids(p, 'DualDialogue');
-        if (dual.length) { dual.forEach(walk); continue; }
+        if (dual.length) { dual.forEach(dd => walk(dd, true)); continue; }
         const runs = trimRuns(fdxRuns(p));
         if (runs.length) {
           const type = FDX_IN[String(p.getAttribute('Type') || '').toLowerCase()] || 'action';
-          blocks.push([type, runsText(runs), 1, fmtOf(runs)]);
+          const second = inDual && type === 'character' && ++chars > 1;
+          blocks.push([type, runsText(runs), 1, fmtOf(runs), second ? 1 : 0]);
         }
         // Final Draft script notes come in as Note lines
         for (const n of kids(p, 'ScriptNote')) {
@@ -1074,10 +1176,12 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     if (/^\s*</.test(text)) {
       s = fromFdx(text);
       if (!s) { setStatus('That doesn’t look like a Final Draft (.fdx) file'); return; }
+    } else if (!/^\s*[\[{]/.test(text) || /\.(fountain|spmd|txt)$/i.test(file.name)) {
+      s = fromFountain(text);
     } else {
       let d;
-      try { d = JSON.parse(text); } catch (e) { setStatus('Import works with .fdx files and WriterDuet .json files'); return; }
-      if (d && d.app === 'script-editor' && Array.isArray(d.blocks)) s = {title:d.title || '', blocks:d.blocks, titlePage:d.titlePage};
+      try { d = JSON.parse(text); } catch (e) { s = fromFountain(text); }
+      if (d && d.app === 'script-editor' && Array.isArray(d.blocks)) s = {title:d.title || '', blocks:d.blocks, titlePage:d.titlePage, settings:d.settings, drafts:d.drafts};
       else if (d && Array.isArray(d.lines)) s = fromWriterDuet(d);
     }
     if (!s || !s.blocks.length) { setStatus('Couldn’t find a script in that file'); return; }
@@ -1089,9 +1193,10 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     }
     const linked = !!doc.fileId;
     commitNow();
-    titleEl.value = s.title || file.name.replace(/\.(json|fdx)$/i, '');
+    titleEl.value = s.title || file.name.replace(/\.(json|fdx|fountain|spmd|txt)$/i, '');
     render(s.blocks);
     titlePage = {...TP_DEFAULT(), ...(s.titlePage || {})};
+    settings = {sceneNumbers:false, ...(s.settings || {})}; drafts = Array.isArray(s.drafts) ? s.drafts : [];
     renderTpCard();
     doc = {fileId:null, rev:null, dirty:false};
     if (linked) resetHistory(); else commitNow();
@@ -1127,20 +1232,20 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   const speakerOf = name => name.replace(/\s*\([^)]*\)/g, '').trim().toUpperCase();
   // Turn the script into printable items; also returns which character lines get an automatic (CONT'D)
   function layoutScript(bl) {
-    const items = [], contd = new Set();
-    let last = null;
+    const items = [], contd = new Set(), sceneNos = new Map(), dualRanges = [];
+    let last = null, sceneNo = 0;
     for (let i = 0; i < bl.length; i++) {
       const [type, text, , fmt] = bl[i];
       if (type === 'note') continue;
       let runs = trimRuns(runsFrom(text, fmt));
       if (!runs.length) continue;
       if (CAPS.has(type)) runs = runs.map(r => ({...r, t:r.t.toUpperCase()}));
-      if (type === 'scene') { last = null; runs = runs.map(r => ({...r, f:normFlags(r.f + 'b')})); }
+      if (type === 'scene') { last = null; sceneNos.set(i, ++sceneNo); runs = runs.map(r => ({...r, f:normFlags(r.f + 'b')})); }
       if (type === 'character') {
         const name = runsText(runs), who = speakerOf(name);
         if (who && who === last && !/\(CONT'?D\)/i.test(name)) { contd.add(i); runs = [...runs, {t:" (CONT'D)", f:''}]; }
         last = who || last;
-        const body = []; let j = i + 1;
+        const body = [], parts = []; let j = i + 1;
         for (; j < bl.length && (bl[j][0] === 'paren' || bl[j][0] === 'dialogue' || bl[j][0] === 'note'); j++) {
           if (bl[j][0] === 'note') continue;
           let r = trimRuns(runsFrom(bl[j][1], bl[j][3]));
@@ -1149,15 +1254,35 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
             r[r.length - 1] = {...r[r.length - 1], t:r[r.length - 1].t.replace(/\)$/, '')};
             r = [{t:'(', f:''}, ...r, {t:')', f:''}];
           }
-          if (r.length) body.push(...linesFor(bl[j][0], r));
+          if (r.length) { body.push(...linesFor(bl[j][0], r)); parts.push({type:bl[j][0], runs:r}); }
         }
-        items.push({kind:'speech', bi:i, sb:1, head:linesFor('character', runs)[0], name:runs, body});
+        const sp = {kind:'speech', bi:i, end:j, sb:1, head:linesFor('character', runs)[0], name:runs, body, parts};
+        const prev = items[items.length - 1];
+        if (bl[i][4] && prev && prev.kind === 'speech') { items[items.length - 1] = dualItem(prev, sp); dualRanges.push([prev.bi, j]); }
+        else items.push(sp);
         i = j - 1;
         continue;
       }
-      items.push({kind:'block', bi:i, type, sb:SPACE_BEFORE[type] || 0, lines:linesFor(type, runs)});
+      const lines = linesFor(type, runs);
+      if (type === 'scene') lines[0].sn = sceneNo;
+      items.push({kind:'block', bi:i, type, sb:SPACE_BEFORE[type] || 0, lines});
     }
-    return {items, contd};
+    return {items, contd, sceneNos, dualRanges};
+  }
+  // Two speeches side by side: printed as one block that never splits across pages
+  const DUAL = [{character:6, dialogue:[0, 27], paren:[4, 21]}, {character:36, dialogue:[30, 27], paren:[34, 21]}];
+  function dualItem(a, b) {
+    const col = (sp, c) => {
+      const out = [{x:c.character, runs:sp.name.length > 0 ? sp.head.runs : [], align:'left'}];
+      for (const p of sp.parts) {
+        const [x, w] = c[p.type] || c.dialogue, hang = p.type === 'paren' ? 1 : 0, text = runsText(p.runs);
+        wrapRanges(text, w - hang).forEach(([s0, e0], i) => out.push({x:x + (i ? hang : 0), runs:sliceRuns(p.runs, s0, e0), align:'left'}));
+      }
+      return out;
+    };
+    const L = col(a, DUAL[0]), R = col(b, DUAL[1]), rows = [];
+    for (let i = 0; i < Math.max(L.length, R.length); i++) rows.push({segs:[L[i], R[i]].filter(Boolean), runs:[], type:'dual'});
+    return {kind:'block', bi:a.bi, type:'dual', sb:a.sb, lines:rows};
   }
   function bestSplit(lines, avail) {
     const max = Math.min(avail, lines.length - 2);
@@ -1176,14 +1301,19 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     return fallback;
   }
   function paginate(items) {
-    const L = PAGE.lines, pages = [[]], starts = [];
-    let used = 0;
-    const put = l => { pages[pages.length - 1].push(l); used++; };
+    const L = PAGE.lines, pages = [[]], starts = [], pageOf = new Map(), linesOf = new Map();
+    let used = 0, curBi = -1;
+    const put = l => {
+      pages[pages.length - 1].push(l); used++;
+      if (!pageOf.has(curBi)) pageOf.set(curBi, pages.length);
+      linesOf.set(curBi, (linesOf.get(curBi) || 0) + 1);
+    };
     const gap = n => { for (let k = 0; k < n; k++) put(null); };
     const newPage = bi => { pages.push([]); used = 0; starts.push(bi); };
     const need = it => it ? it.sb + (it.kind === 'speech' ? 1 + Math.min(2, it.body.length) : Math.min(2, it.lines.length)) : 0;
     for (let idx = 0; idx < items.length; idx++) {
       const it = items[idx];
+      curBi = it.bi;
       if (it.kind === 'block') {
         let lines = it.lines, sb = used ? it.sb : 0;
         if ((it.type === 'scene' || it.type === 'shot') && used && used + sb + lines.length + need(items[idx + 1]) > L) { newPage(it.bi); sb = 0; }
@@ -1218,16 +1348,44 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       }
     }
     if (pages.length > 1 && !pages[pages.length - 1].length) { pages.pop(); starts.pop(); }
-    return {pages, starts};
+    return {pages, starts, pageOf, linesOf};
   }
 
   // Page markers and CONT'D shown while writing
   let pgTimer = null;
   function schedulePaginate() { clearTimeout(pgTimer); pgTimer = setTimeout(repaginate, 400); }
+  let lastLayout = {pageOf:new Map(), linesOf:new Map(), sceneNos:new Map(), pages:0};
+  let known = {names:[], locs:[], times:[]};
   function repaginate() {
     const els = blocks();
-    const {items, contd} = layoutScript(els.map(serialBlock));
-    const {pages, starts} = paginate(items);
+    const bl = els.map(serialBlock);
+    const {items, contd, sceneNos, dualRanges} = layoutScript(bl);
+    const {pages, starts, pageOf, linesOf} = paginate(items);
+    lastLayout = {pageOf, linesOf, sceneNos, pages:pages.length};
+    const dualSet = new Set();
+    dualRanges.forEach(([a, z]) => { for (let k = a; k < z; k++) dualSet.add(k); });
+    els.forEach((b, i) => {
+      b.classList.toggle('dual', dualSet.has(i));
+      if (settings.sceneNumbers && sceneNos.has(i)) b.dataset.sn = sceneNos.get(i); else delete b.dataset.sn;
+    });
+    // names, places and times used so far, for autocomplete (the line being typed doesn't count)
+    const ci = caretInfo(), skip = ci ? els.indexOf(ci.block) : -1;
+    const count = (m, k) => { if (k) m.set(k, (m.get(k) || 0) + 1); };
+    const nm = new Map(), lc = new Map(), tm = new Map();
+    bl.forEach(([type, text], i) => {
+      if (i === skip) return;
+      const up = text.toUpperCase().trim();
+      if (type === 'character') count(nm, speakerOf(up));
+      if (type === 'scene') {
+        const m = up.match(SCENE_PREFIX_RE);
+        if (!m) return;
+        const parts = up.slice(m[0].length).split(' - ');
+        count(lc, parts[0].trim());
+        if (parts.length > 1) count(tm, parts[parts.length - 1].trim());
+      }
+    });
+    const byUse = m => [...m.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0]);
+    known = {names:byUse(nm), locs:byUse(lc), times:byUse(tm)};
     const first = new Map();
     starts.forEach((bi, p) => { if (!first.has(bi)) first.set(bi, p + 2); });
     els.forEach((b, i) => {
@@ -1250,12 +1408,18 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     }
     return out;
   }
-  function drawLines(lines, pageNo) {
+  function drawLines(lines, pageNo, opts = {}) {
     const ops = [];
     const fontOf = f => 'F' + (1 + (f.includes('b') ? 1 : 0) + (f.includes('i') ? 2 : 0));
-    lines.forEach((l, i) => {
+    const one = (l, i) => {
       if (!l) return;
+      if (l.segs) { l.segs.forEach(sg => one(sg, i)); return; }
       const y = PAGE.h - PAGE.top - (i + 1) * PAGE.lh + 2.6;
+      if (l.sn && opts.sceneNumbers) {
+        const t = String(l.sn);
+        ops.push(`BT /F1 12 Tf ${(PAGE.left - 40 - t.length * PAGE.cw).toFixed(2)} ${y.toFixed(2)} Td (${t}) Tj ET`);
+        ops.push(`BT /F1 12 Tf ${(PAGE.left + PAGE.cols * PAGE.cw + 18).toFixed(2)} ${y.toFixed(2)} Td (${t}) Tj ET`);
+      }
       const len = runsText(l.runs).length;
       let col = l.align === 'right' ? PAGE.cols - len : l.align === 'center' ? (PAGE.w / 2 - PAGE.left) / PAGE.cw - len / 2 : l.x;
       for (const r of l.runs) {
@@ -1265,7 +1429,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
         if (r.f.includes('s')) ops.push(`0.6 w ${x} ${(y + 3.4).toFixed(2)} m ${x2} ${(y + 3.4).toFixed(2)} l S`);
         col += r.t.length;
       }
-    });
+    };
+    lines.forEach(one);
     if (pageNo > 1) {
       const t = pageNo + '.', x = (PAGE.w - 72 - t.length * PAGE.cw).toFixed(2);
       ops.push(`BT /F1 12 Tf ${x} ${(PAGE.h - 36 - 9).toFixed(2)} Td (${t}) Tj ET`);
@@ -1291,7 +1456,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     const tp = d.titlePage || {};
     const streams = [];
     if (d.title.trim() || (tp.author || '').trim()) streams.push(drawLines(titlePageLines(d), 0));
-    pages.forEach((p, n) => streams.push(drawLines(p, n + 1)));
+    pages.forEach((p, n) => streams.push(drawLines(p, n + 1, {sceneNumbers:!!(d.settings && d.settings.sceneNumbers)})));
     const objs = [];
     const add = body => { objs.push(body); return objs.length; };
     add('<< /Type /Catalog /Pages 2 0 R >>');
@@ -1327,8 +1492,17 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     const d = currentData();
     if (!hasContent(d)) { setStatus('Nothing to download yet'); return; }
     const name = (d.title.trim() || 'Untitled script').replace(/[\\/:*?"<>|]+/g, '-') + '.pdf';
-    saveBlob(buildPdf(d), name, 'application/pdf');
+    const bytes = buildPdf(d);
     closePicker();
+    // On iPad and iPhone, Safari opens PDFs in the current tab, which leaves the editor; use a new tab instead
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOS) {
+      const url = URL.createObjectURL(new File([bytes], name, {type:'application/pdf'}));
+      const tab = window.open(url, '_blank');
+      if (tab) { setTimeout(() => URL.revokeObjectURL(url), 300000); return; }
+      URL.revokeObjectURL(url);
+    }
+    saveBlob(bytes, name, 'application/pdf');
   }
   document.getElementById('pdfBtn').addEventListener('click', downloadPdf);
   window.__script = {layoutScript, paginate, buildPdf};   // handy for checking layouts from the console
@@ -1339,10 +1513,14 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   const CAPS = new Set(['scene', 'character', 'transition', 'shot']);
   const xmlEsc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   function toFdx(d) {
-    const paras = [];
+    const paras = [], speeches = [];
     const STYLE = {b:'Bold', i:'Italic', u:'Underline', s:'Strikeout'};
-    for (const [type, raw, , fmt] of d.blocks) {
+    const numbered = !!(d.settings && d.settings.sceneNumbers);
+    let sp = -1, sceneNo = 0;
+    for (const [type, raw, , fmt, dd] of d.blocks) {
       if (type === 'note') continue;            // notes stay private, they'd print as script text
+      if (type === 'character') { sp = speeches.length; speeches.push({dual:!!dd}); }
+      else if (type !== 'paren' && type !== 'dialogue') sp = -1;
       let runs = runsFrom(raw, fmt);
       // trim spaces at either end without losing styles
       while (runs.length && !runs[0].t.trim()) runs.shift();
@@ -1359,11 +1537,24 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       const texts = mergeRuns(runs).map(r => r.f
         ? `<Text Style="${r.f.split('').map(c => STYLE[c]).join('+')}">${xmlEsc(r.t)}</Text>`
         : `<Text>${xmlEsc(r.t)}</Text>`).join('');
-      paras.push(`    <Paragraph Type="${FDX_TYPE[type] || 'Action'}">${texts}</Paragraph>`);
+      const num = type === 'scene' ? ++sceneNo : 0;
+      paras.push({sp, xml:`<Paragraph${num && numbered ? ` Number="${num}"` : ''} Type="${FDX_TYPE[type] || 'Action'}">${texts}</Paragraph>`});
+    }
+    // pair a speech with the one before it when it's marked as dual dialogue
+    const outParas = [];
+    for (let i = 0; i < paras.length;) {
+      const p = paras[i];
+      if (p.sp < 0) { outParas.push('    ' + p.xml); i++; continue; }
+      let j = i; while (j < paras.length && paras[j].sp === p.sp) j++;
+      let k = j; while (k < paras.length && paras[k].sp === p.sp + 1) k++;
+      if (k > j && speeches[p.sp + 1] && speeches[p.sp + 1].dual) {
+        outParas.push('    <Paragraph><DualDialogue>' + paras.slice(i, k).map(x => x.xml).join('') + '</DualDialogue></Paragraph>');
+        i = k;
+      } else { paras.slice(i, j).forEach(x => outParas.push('    ' + x.xml)); i = j; }
     }
     return '<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n' +
       '<FinalDraft DocumentType="Script" Template="No" Version="5">\n  <Content>\n' +
-      paras.join('\n') + '\n  </Content>\n' + fdxTitlePage(d) + '</FinalDraft>\n';
+      outParas.join('\n') + '\n  </Content>\n' + fdxTitlePage(d) + '</FinalDraft>\n';
   }
   function fdxTitlePage(d) {
     const tp = d.titlePage || {}, title = d.title.trim();
@@ -1409,6 +1600,585 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   window.addEventListener('online', () => { if (driveState === 'on') { if (doc.dirty) saveToDrive(true); else checkRemote(true); } });
   window.addEventListener('focus', () => checkRemote());
 
+  /* ---------- autocomplete ---------- */
+  const SCENE_PREFIX_RE = /^(INT\.?\s?\/\s?EXT\.?|EXT\.?\s?\/\s?INT\.?|I\/E\.?|INT\.|EXT\.|EST\.)\s*/;
+  const PREFIXES = ['INT. ', 'EXT. ', 'INT./EXT. '];
+  const TIMES = ['DAY', 'NIGHT', 'MORNING', 'AFTERNOON', 'EVENING', 'DAWN', 'DUSK', 'CONTINUOUS', 'LATER', 'MOMENTS LATER'];
+  const TRANSITIONS = ['CUT TO:', 'FADE IN:', 'FADE OUT.', 'FADE TO BLACK.', 'DISSOLVE TO:', 'SMASH CUT TO:', 'MATCH CUT TO:', 'JUMP CUT TO:'];
+  const EXTS = ['(V.O.)', '(O.S.)', '(O.C.)', "(CONT'D)"];
+  const sugEl = document.getElementById('suggest');
+  let sug = null, dismissedKey = null;
+  function updateSuggest() {
+    const ci = caretInfo();
+    if (composing || !ci || !ci.collapsed || document.activeElement !== editor) return hideSuggest();
+    const b = ci.block, type = b.dataset.type, text = txt(b);
+    if (ci.off !== text.length) return hideSuggest();
+    const up = text.toUpperCase();
+    let from = 0, typed = '', opts = [];
+    if (type === 'character') {
+      const p = up.lastIndexOf('(');
+      if (p >= 0) { typed = up.slice(p); from = p; opts = EXTS; }
+      else { typed = up.trim(); opts = known.names; if (!typed) return hideSuggest(); }
+    } else if (type === 'scene') {
+      const m = up.match(SCENE_PREFIX_RE);
+      if (!m) { typed = up.trim(); opts = PREFIXES; }
+      else {
+        const rest = up.slice(m[0].length), dash = rest.lastIndexOf(' - ');
+        const space = /\s$/.test(m[0]) ? '' : ' ';
+        if (dash < 0) { typed = rest.trim(); from = m[0].length; opts = known.locs.map(l => space + l + ' - '); typed = space + typed; }
+        else { typed = rest.slice(dash + 3).trim(); from = m[0].length + dash + 3; opts = [...new Set([...known.times, ...TIMES])]; }
+      }
+    } else if (type === 'transition') { typed = up.trim(); opts = TRANSITIONS; }
+    else return hideSuggest();
+    if (dismissedKey === type + '|' + text) return hideSuggest();
+    const list = opts.filter(o => o.startsWith(typed) && o.trim() !== typed.trim()).slice(0, 6);
+    if (!list.length) return hideSuggest();
+    showSuggest(b, from, list, typed.trim() ? 0 : -1);
+  }
+  function showSuggest(block, from, list, idx) {
+    sug = {block, from, list, idx};
+    sugEl.replaceChildren(...list.map((t, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.textContent = t.trim();
+      btn.setAttribute('role', 'option'); btn.setAttribute('aria-selected', String(i === idx));
+      btn.addEventListener('pointerdown', e => e.preventDefault());
+      btn.addEventListener('mousedown', e => e.preventDefault());
+      btn.addEventListener('click', () => acceptSuggest(i));
+      return btn;
+    }));
+    sugEl.hidden = false;
+    positionSuggest();
+  }
+  function hideSuggest() { sug = null; sugEl.hidden = true; }
+  function dismissSuggest() { const ci = caretInfo(); if (ci) dismissedKey = ci.block.dataset.type + '|' + txt(ci.block); hideSuggest(); }
+  function moveSuggest(d) {
+    if (!sug) return;
+    sug.idx = (sug.idx + d + sug.list.length + (sug.idx < 0 && d < 0 ? 1 : 0)) % sug.list.length;
+    [...sugEl.children].forEach((c, i) => c.setAttribute('aria-selected', String(i === sug.idx)));
+  }
+  function acceptSuggest(i) {
+    if (!sug) return;
+    const {block, from, list} = sug, val = list[i];
+    hideSuggest();
+    ensureFocus();
+    edit(() => {
+      const runs = readRuns(block);
+      setRuns(block, [...sliceRuns(runs, 0, from), {t:val, f:styleAt(runs, from)}]);
+      setCaret(block, from + val.length);
+    });
+  }
+  function positionSuggest() {
+    if (!sug) return;
+    let r = null;
+    try { r = getSelection().getRangeAt(0).getBoundingClientRect(); } catch (e) {}
+    if (!r || (!r.height && !r.top)) r = sug.block.getBoundingClientRect();
+    const vv = window.visualViewport, vTop = vv ? vv.offsetTop : 0, vH = vv ? vv.height : innerHeight;
+    const h = sugEl.offsetHeight, w = sugEl.offsetWidth;
+    let top = r.bottom + 6;
+    if (top + h > vTop + vH - 8) top = r.top - h - 6;
+    sugEl.style.top = Math.max(vTop + hdr.offsetHeight + 4, top) + 'px';
+    sugEl.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
+  }
+  editor.addEventListener('blur', hideSuggest);
+  window.addEventListener('scroll', positionSuggest, {passive:true});
+  editor.addEventListener('input', () => { dismissedKey = null; });
+
+  /* ---------- sheets for the tools ---------- */
+  const toolsSheet = document.getElementById('toolsSheet');
+  const panel = document.getElementById('panel'), panelHead = document.getElementById('panelHead'), panelBody = document.getElementById('panelBody');
+  const el = (tag, props = {}, ...kids) => { const n = document.createElement(tag); Object.assign(n, props); n.append(...kids); return n; };
+  function openPanel(title, ...content) { panelHead.textContent = title; panelBody.replaceChildren(...content); panel.hidden = false; toolsSheet.hidden = true; }
+  function closePanel() { panel.hidden = true; }
+  document.getElementById('panelClose').addEventListener('click', closePanel);
+  panel.addEventListener('click', e => { if (e.target === panel) closePanel(); });
+  document.getElementById('toolsBtn').addEventListener('click', () => {
+    document.getElementById('snState').textContent = settings.sceneNumbers ? 'On' : 'Off';
+    toolsSheet.hidden = false;
+  });
+  document.getElementById('toolsClose').addEventListener('click', () => { toolsSheet.hidden = true; });
+  toolsSheet.addEventListener('click', e => { if (e.target === toolsSheet) toolsSheet.hidden = true; });
+  document.getElementById('findKey').textContent = (/Mac|iPhone|iPad/.test(navigator.platform) ? 'Cmd' : 'Ctrl') + '+F';
+  function jumpTo(b, off) {
+    closePanel(); toolsSheet.hidden = true;
+    editor.focus({preventScroll:true});
+    setCaret(b, off === undefined ? txt(b).length : off);
+    const r = b.getBoundingClientRect();
+    window.scrollBy(0, r.top - hdr.offsetHeight - 80);
+    refreshUI();
+  }
+  // edits made from a tool: same as edit() but without scrolling back to the cursor
+  function toolEdit(fn) { commitNow(); fn(); normalize(); refreshUI(); commitNow(); scheduleSave(); }
+
+  /* ---------- find and replace ---------- */
+  const findBar = document.getElementById('findBar'), findIn = document.getElementById('findIn'), replIn = document.getElementById('replIn');
+  const findCount = document.getElementById('findCount');
+  let matches = [], mIdx = -1, findTimer = null;
+  const hasHighlight = !!(window.CSS && CSS.highlights && window.Highlight);
+  function rangeOf(m) { const r = document.createRange(); r.setStart(...nodeAt(m.b, m.s)); r.setEnd(...nodeAt(m.b, m.e)); return r; }
+  function findAll(keep) {
+    const q = findIn.value, ql = q.toLowerCase();
+    matches = [];
+    if (q) blocks().forEach(b => {
+      const t = txt(b).toLowerCase();
+      for (let i = t.indexOf(ql); i !== -1; i = t.indexOf(ql, i + ql.length)) matches.push({b, s:i, e:i + q.length});
+    });
+    if (!keep) mIdx = matches.length ? 0 : -1;
+    else if (mIdx >= matches.length) mIdx = matches.length - 1;
+    paintMatches();
+  }
+  function paintMatches(scroll) {
+    findCount.textContent = !findIn.value ? '' : matches.length ? `${mIdx + 1} of ${matches.length}` : 'No matches';
+    if (hasHighlight) {
+      CSS.highlights.set('find', new Highlight(...matches.map(rangeOf)));
+      if (mIdx >= 0) CSS.highlights.set('find-now', new Highlight(rangeOf(matches[mIdx]))); else CSS.highlights.delete('find-now');
+    }
+    if (scroll && mIdx >= 0) {
+      let r; try { r = rangeOf(matches[mIdx]).getBoundingClientRect(); } catch (e) { r = matches[mIdx].b.getBoundingClientRect(); }
+      const vv = window.visualViewport, vH = vv ? vv.height : innerHeight;
+      if (r.top < hdr.offsetHeight + 20 || r.bottom > vH - 40) window.scrollBy(0, r.top - hdr.offsetHeight - vH / 4);
+      if (!hasHighlight) { const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rangeOf(matches[mIdx])); }
+    }
+  }
+  function stepMatch(d) { if (!matches.length) return; mIdx = (mIdx + d + matches.length) % matches.length; paintMatches(true); }
+  function openFind() {
+    findBar.hidden = false; hideSuggest(); toolsSheet.hidden = true;
+    const sel = getSelection();
+    if (sel.rangeCount && !sel.isCollapsed && editor.contains(sel.anchorNode)) { const t = sel.toString(); if (t && !t.includes('\n') && t.length < 80) findIn.value = t; }
+    findIn.focus(); findIn.select();
+    findAll(); paintMatches(true);
+  }
+  function closeFind() {
+    findBar.hidden = true; matches = []; mIdx = -1;
+    if (hasHighlight) { CSS.highlights.delete('find'); CSS.highlights.delete('find-now'); }
+  }
+  function replaceOne() {
+    if (mIdx < 0) return;
+    const m = matches[mIdx], rep = replIn.value;
+    toolEdit(() => {
+      const runs = readRuns(m.b), f = (sliceRuns(runs, m.s, m.s + 1)[0] || {f:''}).f;
+      setRuns(m.b, [...sliceRuns(runs, 0, m.s), {t:rep, f}, ...sliceRuns(runs, m.e)]);
+    });
+    findAll(true); paintMatches(true);
+  }
+  function replaceAll() {
+    if (!matches.length) return;
+    const n = matches.length, rep = replIn.value;
+    toolEdit(() => {
+      for (let k = matches.length - 1; k >= 0; k--) {
+        const m = matches[k], runs = readRuns(m.b), f = (sliceRuns(runs, m.s, m.s + 1)[0] || {f:''}).f;
+        setRuns(m.b, [...sliceRuns(runs, 0, m.s), {t:rep, f}, ...sliceRuns(runs, m.e)]);
+      }
+    });
+    findAll(); setStatus(`Replaced ${n} ${n === 1 ? 'match' : 'matches'}`);
+  }
+  findIn.addEventListener('input', () => { findAll(); paintMatches(true); });
+  findIn.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); stepMatch(e.shiftKey ? -1 : 1); }
+    if (e.key === 'Escape') { e.preventDefault(); closeFind(); }
+  });
+  replIn.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); replaceOne(); }
+    if (e.key === 'Escape') { e.preventDefault(); closeFind(); }
+  });
+  document.getElementById('findNext').addEventListener('click', () => stepMatch(1));
+  document.getElementById('findPrev').addEventListener('click', () => stepMatch(-1));
+  document.getElementById('replOne').addEventListener('click', replaceOne);
+  document.getElementById('replAll').addEventListener('click', replaceAll);
+  document.getElementById('findClose').addEventListener('click', closeFind);
+  editor.addEventListener('input', () => { if (!findBar.hidden) { clearTimeout(findTimer); findTimer = setTimeout(() => findAll(true), 300); } });
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'f') { e.preventDefault(); openFind(); }
+  });
+
+  /* ---------- scenes ---------- */
+  function sceneList() {
+    const els = blocks(), out = [];
+    els.forEach((b, i) => { if (b.dataset.type === 'scene' && txt(b).trim()) out.push({i, b}); });
+    return out.map((sc, k) => ({...sc, end:k + 1 < out.length ? out[k + 1].i : els.length, no:k + 1}));
+  }
+  function showScenes() {
+    repaginate();
+    const list = sceneList();
+    if (!list.length) { openPanel('Scenes', el('p', {textContent:'No scene headings yet. Add one with the Scene button.'})); return; }
+    const rows = list.map((sc, k) => {
+      const go = el('button', {className:'item'}, el('span', {textContent:`${sc.no}. ${txt(sc.b)}`}), el('small', {textContent:'p. ' + (lastLayout.pageOf.get(sc.i) || 1)}));
+      go.addEventListener('click', () => jumpTo(sc.b));
+      const up = el('button', {className:'icon', title:'Move up', ariaLabel:'Move scene up', disabled:k === 0, innerHTML:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>'});
+      const dn = el('button', {className:'icon', title:'Move down', ariaLabel:'Move scene down', disabled:k === list.length - 1, innerHTML:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>'});
+      up.addEventListener('click', () => moveScene(k, -1));
+      dn.addEventListener('click', () => moveScene(k, 1));
+      return el('div', {className:'scene-row'}, go, up, dn);
+    });
+    openPanel('Scenes', el('p', {textContent:'Tap a scene to go to it. Use the arrows to move a scene, with everything in it.'}), ...rows);
+  }
+  function moveScene(k, d) {
+    const list = sceneList(), a = list[k], b = list[k + d];
+    if (!a || !b) return;
+    const els = blocks();
+    const nodesA = els.slice(a.i, a.end), nodesB = els.slice(b.i, b.end);
+    toolEdit(() => {
+      if (d < 0) nodesA.forEach(n => editor.insertBefore(n, nodesB[0]));
+      else { let ref = nodesB[nodesB.length - 1].nextSibling; nodesA.forEach(n => editor.insertBefore(n, ref)); }
+    });
+    repaginate(); showScenes();
+  }
+
+  /* ---------- reports ---------- */
+  function showReports() {
+    repaginate();
+    const bl = blocks().map(serialBlock), scenes = sceneList();
+    const sceneOf = i => { let n = 0; for (const sc of scenes) if (sc.i <= i) n = sc.no; return n; };
+    const words = t => (t.match(/[A-Za-z0-9’']+/g) || []).length;
+    const chars = new Map(), places = new Map();
+    let total = 0, speaker = null;
+    bl.forEach(([type, text], i) => {
+      if (type === 'note') return;
+      total += words(text);
+      if (type === 'character') {
+        speaker = speakerOf(text.toUpperCase());
+        if (!speaker) return;
+        const c = chars.get(speaker) || {speeches:0, words:0, scenes:new Set()};
+        c.speeches++; c.scenes.add(sceneOf(i)); chars.set(speaker, c);
+      } else if ((type === 'dialogue' || type === 'paren') && speaker && chars.has(speaker)) {
+        if (type === 'dialogue') chars.get(speaker).words += words(text);
+      } else speaker = null;
+      if (type === 'scene') {
+        const up = text.toUpperCase().trim(), m = up.match(SCENE_PREFIX_RE);
+        const where = m ? up.slice(m[0].length).split(' - ')[0].trim() : up;
+        const p = places.get(where) || {kind:new Set(), scenes:0};
+        p.scenes++; if (m) p.kind.add(m[1].replace(/\s/g, '').replace(/\.$/, '')); places.set(where, p);
+      }
+    });
+    const table = (head, rows, nums) => el('div', {className:'tbl'}, el('table', {},
+      el('thead', {}, el('tr', {}, ...head.map((h, k) => el('th', {textContent:h, className:nums.includes(k) ? 'num' : ''})))),
+      el('tbody', {}, ...rows.map(r => el('tr', {}, ...r.map((c, k) => el('td', {textContent:String(c), className:nums.includes(k) ? 'num' : ''})))))));
+    const eighths = n => { const e = Math.max(1, Math.round(n / (PAGE.lines / 8))); const p = Math.floor(e / 8), r = e % 8; return (p ? p + (r ? ' ' : '') : '') + (r ? r + '/8' : ''); };
+    const sceneLines = sc => { let n = 0; for (const [bi, c] of lastLayout.linesOf) if (bi >= sc.i && bi < sc.end) n += c; return n; };
+    const cRows = [...chars.entries()].sort((a, b) => b[1].speeches - a[1].speeches).map(([n, c]) => [n, c.speeches, c.words, c.scenes.size]);
+    const pRows = [...places.entries()].sort((a, b) => b[1].scenes - a[1].scenes).map(([n, p]) => [n || '(no location)', [...p.kind].join(', '), p.scenes]);
+    const sRows = scenes.map(sc => [sc.no, txt(sc.b).toUpperCase(), lastLayout.pageOf.get(sc.i) || 1, eighths(sceneLines(sc))]);
+    openPanel('Reports',
+      el('p', {textContent:`${lastLayout.pages} ${lastLayout.pages === 1 ? 'page' : 'pages'}, ${scenes.length} ${scenes.length === 1 ? 'scene' : 'scenes'}, ${chars.size} speaking ${chars.size === 1 ? 'character' : 'characters'}, ${total.toLocaleString('en-GB')} words.`}),
+      el('h3', {textContent:'Characters'}), cRows.length ? table(['Character', 'Speeches', 'Words spoken', 'Scenes'], cRows, [1, 2, 3]) : el('p', {textContent:'No speaking characters yet.'}),
+      el('h3', {textContent:'Locations'}), pRows.length ? table(['Location', 'Int/Ext', 'Scenes'], pRows, [2]) : el('p', {textContent:'No scene headings yet.'}),
+      el('h3', {textContent:'Scenes'}), sRows.length ? table(['#', 'Scene', 'Page', 'Length'], sRows, [0, 2]) : el('p', {textContent:'No scene headings yet.'}),
+      el('p', {textContent:'Length is in eighths of a page, the usual way scenes are measured for scheduling.'}));
+  }
+
+  /* ---------- drafts ---------- */
+  function showDrafts() {
+    const name = el('input', {type:'text', placeholder:'Draft name, e.g. First draft', autocomplete:'off'});
+    const save = el('button', {className:'textbtn primary', textContent:'Save draft'});
+    save.addEventListener('click', () => {
+      drafts.unshift({name:name.value.trim() || `Draft ${drafts.length + 1}`, date:new Date().toISOString(),
+        title:titleEl.value, titlePage:{...titlePage}, blocks:blocks().map(serialBlock)});
+      scheduleSave(); showDrafts(); setStatus('Draft saved');
+    });
+    name.addEventListener('keydown', e => { if (e.key === 'Enter') save.click(); });
+    const rows = drafts.map((dr, k) => {
+      const cmp = el('button', {className:'textbtn', textContent:'Compare'});
+      const back = el('button', {className:'textbtn', textContent:'Restore'});
+      const del = el('button', {className:'textbtn', textContent:'Delete'});
+      cmp.addEventListener('click', () => showCompare(dr));
+      back.addEventListener('click', () => {
+        if (back.dataset.armed) {
+          commitNow();
+          render(dr.blocks); titleEl.value = dr.title || ''; titlePage = {...TP_DEFAULT(), ...(dr.titlePage || {})}; renderTpCard();
+          commitNow(); refreshUI(); scheduleSave(); closePanel(); window.scrollTo(0, 0);
+          setStatus('Draft restored. Undo brings back what you had');
+        } else { back.dataset.armed = '1'; back.textContent = 'Tap again to restore'; back.classList.add('armed'); }
+      });
+      del.addEventListener('click', () => {
+        if (del.dataset.armed) { drafts.splice(k, 1); scheduleSave(); showDrafts(); }
+        else { del.dataset.armed = '1'; del.textContent = 'Tap again to delete'; del.classList.add('armed'); }
+      });
+      return el('div', {className:'draft-row'},
+        el('div', {className:'meta'}, el('b', {textContent:dr.name}), el('small', {textContent:fmtDate(dr.date)})), cmp, back, del);
+    });
+    openPanel('Drafts',
+      el('p', {textContent:'A draft is a saved copy of the script as it is now. Drafts are kept with the script in Drive.'}),
+      el('div', {className:'draft-new'}, name, save),
+      ...(rows.length ? rows : [el('p', {textContent:'No drafts saved yet.'})]));
+  }
+  function diffBlocks(a, b) {
+    const key = x => x[0] + '|' + x[1];
+    const A = a.map(key), B = b.map(key), n = A.length, m = B.length;
+    const L = Array.from({length:n + 1}, () => new Uint16Array(m + 1));
+    for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = A[i] === B[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+    const out = []; let i = 0, j = 0;
+    while (i < n && j < m) {
+      if (A[i] === B[j]) { out.push({op:'same', x:a[i]}); i++; j++; }
+      else if (L[i + 1][j] >= L[i][j + 1]) out.push({op:'del', x:a[i++]});
+      else out.push({op:'add', x:b[j++]});
+    }
+    while (i < n) out.push({op:'del', x:a[i++]});
+    while (j < m) out.push({op:'add', x:b[j++]});
+    return out;
+  }
+  function showCompare(dr) {
+    const cur = blocks().map(serialBlock).filter(x => x[1].trim());
+    const old = (dr.blocks || []).filter(x => x[1].trim());
+    if (old.length * cur.length > 9e6) { openPanel('Compare', el('p', {textContent:'This script is too long to compare here.'})); return; }
+    const d = diffBlocks(old, cur);
+    const added = d.filter(x => x.op === 'add').length, removed = d.filter(x => x.op === 'del').length;
+    const view = el('div', {className:'diff'});
+    const line = (cls, x) => view.append(el('div', {className:cls}, el('span', {className:'t', textContent:LABELS[x[0]] || x[0]}), x[1]));
+    for (let k = 0; k < d.length;) {
+      if (d[k].op !== 'same') { line(d[k].op, d[k].x); k++; continue; }
+      let z = k; while (z < d.length && d[z].op === 'same') z++;
+      const run = z - k;
+      if (run > 4) {
+        if (k > 0) line('', d[k].x);
+        view.append(el('div', {className:'gap', textContent:`${run - (k > 0 ? 1 : 0) - (z < d.length ? 1 : 0)} unchanged lines`}));
+        if (z < d.length) line('', d[z - 1].x);
+      } else for (let q = k; q < z; q++) line('', d[q].x);
+      k = z;
+    }
+    const back = el('button', {className:'textbtn', textContent:'Back to drafts'});
+    back.addEventListener('click', showDrafts);
+    openPanel('Compare',
+      el('p', {textContent:`“${dr.name}” compared with the script now: ${added} ${added === 1 ? 'line' : 'lines'} added or changed (green), ${removed} removed or changed (crossed out).`}),
+      back, added + removed ? view : el('p', {textContent:'No differences.'}));
+  }
+
+  /* ---------- dual dialogue and scene numbers ---------- */
+  function toggleDual() {
+    toolsSheet.hidden = true;
+    const ci = caretInfo();
+    let ch = ci ? ci.block : null;
+    while (ch && (ch.dataset.type === 'dialogue' || ch.dataset.type === 'paren' || ch.dataset.type === 'note')) ch = ch.previousElementSibling;
+    if (!ch || ch.dataset.type !== 'character') { setStatus('Put the cursor in the second speech first'); return; }
+    if (!ch.dataset.dual) {
+      let p = ch.previousElementSibling;
+      while (p && (p.dataset.type === 'note' || !txt(p).trim())) p = p.previousElementSibling;
+      if (!p || (p.dataset.type !== 'dialogue' && p.dataset.type !== 'paren')) { setStatus('Dual dialogue needs another speech straight before this one'); return; }
+    }
+    toolEdit(() => { if (ch.dataset.dual) delete ch.dataset.dual; else ch.dataset.dual = '1'; });
+    repaginate();
+    setStatus(ch.dataset.dual ? 'Speeches paired as dual dialogue' : 'Dual dialogue removed');
+  }
+  function toggleNumbers() {
+    settings.sceneNumbers = !settings.sceneNumbers;
+    document.getElementById('snState').textContent = settings.sceneNumbers ? 'On' : 'Off';
+    scheduleSave(); repaginate();
+  }
+  for (const b of document.querySelectorAll('.tool')) b.addEventListener('click', () => {
+    const t = b.dataset.tool;
+    if (t === 'find') openFind();
+    else if (t === 'scenes') showScenes();
+    else if (t === 'reports') showReports();
+    else if (t === 'drafts') showDrafts();
+    else if (t === 'dual') toggleDual();
+    else if (t === 'numbers') toggleNumbers();
+    else if (t === 'rails') toggleRails();
+  });
+
+  /* ---------- Fountain (.fountain) ---------- */
+  function fountainText(runs) {
+    return runs.map(r => {
+      const t = r.t.replace(/([*_\\])/g, '\\$1');
+      if (!r.f || !t.trim()) return t;
+      const lead = t.match(/^\s*/)[0], trail = t.match(/\s*$/)[0];
+      let core = t.trim();
+      if (r.f.includes('b') && r.f.includes('i')) core = '***' + core + '***';
+      else if (r.f.includes('b')) core = '**' + core + '**';
+      else if (r.f.includes('i')) core = '*' + core + '*';
+      if (r.f.includes('u')) core = '_' + core + '_';
+      return lead + core + trail;
+    }).join('');
+  }
+  function toFountain(d) {
+    const tp = d.titlePage || {}, out = [];
+    const multi = (k, v) => { const ls = (v || '').split('\n').map(x => x.trim()).filter(Boolean); if (!ls.length) return; out.push(ls.length === 1 ? `${k}: ${ls[0]}` : `${k}:\n` + ls.map(x => '   ' + x).join('\n')); };
+    multi('Title', d.title.trim());
+    if (tp.author) { multi('Credit', tp.credit || 'Written by'); multi('Author', tp.author); }
+    multi('Source', tp.source); multi('Draft date', tp.draft); multi('Contact', tp.contact);
+    if (out.length) out.push('');
+    const numbered = !!(d.settings && d.settings.sceneNumbers);
+    let sceneNo = 0, prev = null;
+    for (const [type, raw, , fmt, dd] of d.blocks) {
+      let runs = trimRuns(runsFrom(raw, fmt));
+      if (!runs.length) continue;
+      const plain = runsText(runs);
+      let line;
+      if (type === 'note') line = '[[' + plain + ']]';
+      else if (type === 'scene') { sceneNo++; line = (SCENE_RE.test(plain) ? '' : '.') + fountainText(runs).toUpperCase() + (numbered ? ` #${sceneNo}#` : ''); }
+      else if (type === 'character') line = (/[A-Za-z]/.test(plain) ? '' : '@') + fountainText(runs).toUpperCase() + (dd ? ' ^' : '');
+      else if (type === 'paren') line = /^\(.*\)$/.test(plain) ? fountainText(runs) : '(' + fountainText(runs) + ')';
+      else if (type === 'dialogue') line = fountainText(runs);
+      else if (type === 'transition') line = (/TO:$/i.test(plain) ? '' : '> ') + fountainText(runs).toUpperCase();
+      else if (type === 'shot') line = '!' + fountainText(runs).toUpperCase();
+      else line = (plain === plain.toUpperCase() && /[A-Z]/.test(plain)) || SCENE_RE.test(plain) ? '!' + fountainText(runs) : fountainText(runs);
+      const inSpeech = (type === 'paren' || type === 'dialogue') && (prev === 'character' || prev === 'paren' || prev === 'dialogue');
+      if (!inSpeech && out.length && out[out.length - 1] !== '') out.push('');
+      out.push(line);
+      prev = type === 'note' ? prev : type;
+    }
+    return out.join('\n') + '\n';
+  }
+  function fountainRuns(s) {
+    s = s.replace(/\[\[[\s\S]*?\]\]/g, '');
+    const out = []; let b = false, i = false, u = false, buf = '';
+    const push = () => { if (buf) { out.push({t:buf, f:normFlags((b ? 'b' : '') + (i ? 'i' : '') + (u ? 'u' : ''))}); buf = ''; } };
+    for (let k = 0; k < s.length; k++) {
+      const c = s[k];
+      if (c === '\\' && k + 1 < s.length) { buf += s[++k]; continue; }
+      if (c === '*') { let n = 1; while (s[k + n] === '*' && n < 3) n++; push(); if (n === 3) { b = !b; i = !i; } else if (n === 2) b = !b; else i = !i; k += n - 1; continue; }
+      if (c === '_') { push(); u = !u; continue; }
+      buf += c;
+    }
+    push();
+    return trimRuns(mergeRuns(out));
+  }
+  function fromFountain(text) {
+    text = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').replace(/\/\*[\s\S]*?\*\//g, '');
+    let lines = text.split('\n');
+    const tp = TP_DEFAULT(); let title = '';
+    if (/^[A-Za-z][A-Za-z ]*:/.test(lines[0] || '')) {
+      const vals = {}; let key = null, i = 0;
+      for (; i < lines.length && lines[i].trim(); i++) {
+        const l = lines[i], m = l.match(/^([A-Za-z][A-Za-z ]*):\s*(.*)$/);
+        if (m && !/^(\s{2,}|\t)/.test(l)) { key = m[1].toLowerCase(); vals[key] = m[2].trim(); }
+        else if (key) vals[key] = (vals[key] ? vals[key] + '\n' : '') + l.trim();
+      }
+      lines = lines.slice(i);
+      const clean = v => runsText(fountainRuns(v || '')).trim();
+      title = clean(vals.title).replace(/\n/g, ' ');
+      if (vals.credit) tp.credit = clean(vals.credit);
+      tp.author = clean(vals.author || vals.authors);
+      tp.source = clean(vals.source);
+      tp.contact = (vals.contact || '').split('\n').map(x => clean(x)).filter(Boolean).join('\n');
+      tp.draft = [vals['draft date'], vals.notes].filter(Boolean).map(clean).join('\n');
+    }
+    const paras = []; let cur = [];
+    for (const l of lines) { if (!l.trim() && l !== '  ') { if (cur.length) paras.push(cur); cur = []; } else cur.push(l.replace(/\s+$/, '')); }
+    if (cur.length) paras.push(cur);
+    const blocks = [];
+    const add = (type, s, dual) => { const r = fountainRuns(s); if (r.length) blocks.push([type, runsText(r), 1, fmtOf(r), dual ? 1 : 0]); };
+    const isChar = l => { const t = l.replace(/\^\s*$/, '').trim(); if (t.startsWith('@')) return true; if (t.startsWith('!')) return false; const base = t.replace(/\([^)]*\)/g, ''); return /[A-Z]/.test(base) && !/[a-z]/.test(base); };
+    for (const p of paras) {
+      const first = p[0].trim(), whole = p.map(x => x.trim()).join(' ');
+      if (/^={3,}$/.test(first)) continue;
+      if (/^#/.test(first)) { add('note', first.replace(/^#+\s*/, '')); continue; }
+      if (/^=(?!=)/.test(first)) { add('note', first.replace(/^=\s*/, '')); continue; }
+      if (/^\[\[[\s\S]*\]\]$/.test(whole)) { const t = whole.slice(2, -2).trim(); if (t) blocks.push(['note', t, 1, 0, 0]); continue; }
+      if (p.length === 1 && (/^\.(?!\.)/.test(first) || SCENE_RE.test(first))) { add('scene', first.replace(/^\./, '').replace(/\s*#[^#]+#\s*$/, '')); continue; }
+      if (p.length === 1 && /^>/.test(first) && !/<$/.test(first)) { add('transition', first.replace(/^>\s*/, '')); continue; }
+      if (p.length === 1 && /^[^a-z]+TO:$/.test(first)) { add('transition', first); continue; }
+      if (p.length > 1 && isChar(first)) {
+        const dual = /\^\s*$/.test(first);
+        add('character', first.replace(/\^\s*$/, '').replace(/^@/, '').trim(), dual);
+        let dlg = [];
+        const flush = () => { if (dlg.length) add('dialogue', dlg.join(' ')); dlg = []; };
+        for (const l of p.slice(1)) { const t = l.trim(); if (/^\(.*\)$/.test(t)) { flush(); add('paren', t); } else if (t) dlg.push(t); }
+        flush();
+        continue;
+      }
+      add('action', p.map(x => x.trim().replace(/^!/, '').replace(/^>\s*(.*?)\s*<$/, '$1')).join(' '));
+    }
+    return {title, blocks, titlePage:tp};
+  }
+  document.getElementById('fountainBtn').addEventListener('click', () => {
+    const d = currentData();
+    if (!hasContent(d)) { setStatus('Nothing to download yet'); return; }
+    const name = (d.title.trim() || 'Untitled script').replace(/[\\/:*?"<>|]+/g, '-') + '.fountain';
+    saveBlob(new TextEncoder().encode(toFountain(d)), name, 'application/octet-stream');
+    closePicker();
+  });
+  Object.assign(window.__script, {toFountain, fromFountain});
+
+  /* ---------- side toolbars (iPad) and full screen ---------- */
+  const RAIL_KEY = 'script-editor:rails';
+  const railL = document.getElementById('railL'), railR = document.getElementById('railR');
+  const rowMain = document.getElementById('rowMain'), rowTypes = document.getElementById('rowTypes');
+  const fullBtn = document.getElementById('fullBtn');
+  const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const pair = el('div', {className:'pair'});
+  const label = t => el('div', {className:'rail-label', textContent:t});
+  // every tool as its own button in the left bar, so nothing hides behind the Tools menu
+  const RAIL_TOOLS = [['find', 'Find'], ['scenes', 'Scenes'], ['reports', 'Reports'], ['drafts', 'Drafts'], ['dual', 'Dual dialogue'], ['numbers', 'Scene numbers'], ['rails', 'Top toolbar']];
+  const railTools = RAIL_TOOLS.map(([tool, text]) => {
+    const b = el('button', {className:'textbtn tool-b', textContent:text});
+    b.dataset.tool = tool;
+    b.addEventListener('pointerdown', e => e.preventDefault());
+    b.addEventListener('mousedown', e => e.preventDefault());
+    b.addEventListener('click', () => { document.querySelector(`#toolsSheet [data-tool="${tool}"]`).click(); railLabels(); });
+    return b;
+  });
+  function railLabels() {
+    const n = railTools.find(b => b.dataset.tool === 'numbers');
+    n.textContent = 'Scene numbers: ' + (settings.sceneNumbers ? 'on' : 'off');
+  }
+  const movable = [titleEl, document.getElementById('pages'), statusEl, undoBtn, redoBtn, document.querySelector('.fmt'),
+    document.querySelector('.types'), openBtn, document.getElementById('toolsBtn'), newBtn, driveBtn, fullBtn];
+  const homes = new Map(movable.map(n => { const ph = document.createComment(''); n.before(ph); return [n, ph]; }));
+  let railsOn = false;
+  function railPref() { try { return localStorage.getItem(RAIL_KEY); } catch (e) { return null; } }
+  function wantRails() {
+    if (innerWidth < 700) return false;                       // too narrow for two side bars
+    const p = railPref();
+    return p === null ? isIOSDevice : p === '1';
+  }
+  function setRails(on) {
+    if (on === railsOn) return;
+    railsOn = on;
+    document.documentElement.classList.toggle('rails', on);
+    railL.hidden = railR.hidden = !on;
+    rowMain.hidden = rowTypes.hidden = on;
+    if (on) {
+      pair.replaceChildren(undoBtn, redoBtn);
+      railL.replaceChildren(pair, label('Style'), document.querySelector('.fmt'), label('Line'), document.querySelector('.types'),
+        label('Tools'), ...railTools);
+      railLabels();
+      railR.replaceChildren(titleEl, document.getElementById('pages'), statusEl, openBtn, newBtn, driveBtn, fullBtn);
+    } else {
+      movable.forEach(n => homes.get(n).after(n));
+      railL.replaceChildren(); railR.replaceChildren();
+    }
+    syncHeader(); pin();
+    document.getElementById('railState').textContent = on ? 'On' : 'Off';
+    document.getElementById('toolsBtn').hidden = on;
+  }
+  // with side bars the top bar only appears for find and replace, or a save warning
+  function syncHeader() { hdr.hidden = railsOn && findBar.hidden && conflictRow.hidden; measure(); }
+  new MutationObserver(syncHeader).observe(findBar, {attributes:true, attributeFilter:['hidden']});
+  new MutationObserver(syncHeader).observe(conflictRow, {attributes:true, attributeFilter:['hidden']});
+  window.addEventListener('resize', () => setRails(wantRails()));
+  function toggleRails() {
+    const next = !railsOn;
+    try { localStorage.setItem(RAIL_KEY, next ? '1' : '0'); } catch (e) {}
+    if (next && innerWidth < 700) setStatus('The screen is too narrow for side toolbars');
+    setRails(wantRails());
+    toolsSheet.hidden = true;
+  }
+
+  // Full screen hides Safari's own bars, where the browser allows it
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  const canFull = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  fullBtn.hidden = !canFull;
+  function toggleFull() {
+    const d = document, root = d.documentElement;
+    try {
+      if (fsEl()) { (d.exitFullscreen || d.webkitExitFullscreen).call(d); return; }
+      const req = root.requestFullscreen || root.webkitRequestFullscreen;
+      const p = req && req.call(root);
+      if (p && p.catch) p.catch(() => setStatus('Safari didn’t allow full screen here'));
+    } catch (e) { setStatus('Safari didn’t allow full screen here'); }
+  }
+  function syncFull() {
+    const on = !!fsEl();
+    fullBtn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+    fullBtn.title = on ? 'Exit full screen' : 'Full screen';
+    fullBtn.innerHTML = on
+      ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>'
+      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+  }
+  fullBtn.addEventListener('pointerdown', e => e.preventDefault());
+  fullBtn.addEventListener('mousedown', e => e.preventDefault());
+  fullBtn.addEventListener('click', toggleFull);
+  document.addEventListener('fullscreenchange', syncFull);
+  document.addEventListener('webkitfullscreenchange', syncFull);
+
   /* ---------- events ---------- */
   editor.addEventListener('beforeinput', e => {
     const it = e.inputType;
@@ -1418,6 +2188,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     if (FMT[it]) { e.preventDefault(); toggleFormat(FMT[it]); return; }
     if (e.isComposing) return;
     const ci = caretInfo(); if (!ci) return;
+    if ((it === 'insertParagraph' || it === 'insertLineBreak') && sug && sug.idx >= 0) { e.preventDefault(); acceptSuggest(sug.idx); return; }
     if (it === 'insertParagraph' || it === 'insertLineBreak') { e.preventDefault(); splitAtCaret(); return; }
     if (it === 'insertText' && ci.collapsed && e.data && pending && pending.block === ci.block && pending.off === ci.off) {
       e.preventDefault();
@@ -1462,6 +2233,11 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   editor.addEventListener('keydown', e => {
     if (e.isComposing || e.keyCode === 229) return;
     const mod = e.metaKey || e.ctrlKey;
+    if (sug && !mod && !e.altKey) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); moveSuggest(e.key === 'ArrowDown' ? 1 : -1); return; }
+      if ((e.key === 'Enter' || e.key === 'Tab') && sug.idx >= 0 && !e.shiftKey) { e.preventDefault(); acceptSuggest(sug.idx); return; }
+      if (e.key === 'Escape') { e.preventDefault(); dismissSuggest(); return; }
+    }
     if (e.key === 'Tab') { e.preventDefault(); cycleType(e.shiftKey ? -1 : 1); return; }
     if (mod && !e.altKey && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
     if (mod && !e.altKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
@@ -1516,6 +2292,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     commitNow();
     render([['scene', '', 0]]); titleEl.value = '';
     titlePage = {...TP_DEFAULT(), credit:titlePage.credit, author:titlePage.author, contact:titlePage.contact};
+    settings = {sceneNumbers:false}; drafts = [];
     renderTpCard();
     doc = {fileId:null, rev:null, dirty:false};
     if (linked) resetHistory(); else commitNow();
@@ -1571,7 +2348,14 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   if ('ResizeObserver' in window) new ResizeObserver(measure).observe(hdr);
   measure();
   const vv = window.visualViewport;
-  const pin = () => { const y = vv ? Math.max(0, vv.offsetTop) : 0; hdr.style.transform = y ? `translateY(${y}px)` : ''; };
+  function pin() {
+    const y = vv ? Math.max(0, vv.offsetTop) : 0;
+    hdr.style.transform = y ? `translateY(${y}px)` : '';
+    for (const r of [railL, railR]) {
+      r.style.transform = y ? `translateY(${y}px)` : '';
+      r.style.height = vv ? vv.height + 'px' : '';
+    }
+  }
   if (vv) { vv.addEventListener('scroll', pin); vv.addEventListener('resize', pin); }
 
   /* ---------- start ---------- */
@@ -1580,10 +2364,12 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   if (saved) {
     titleEl.value = saved.title || ''; render(saved.blocks);
     titlePage = {...TP_DEFAULT(), ...(saved.titlePage || {})};
+    settings = {sceneNumbers:false, ...(saved.settings || {})}; drafts = Array.isArray(saved.drafts) ? saved.drafts : [];
     const d = saved.doc || {};
     doc = {fileId:d.fileId || null, rev:d.rev || null, dirty:saved.doc ? (!!d.dirty || !d.rev) : true};
   } else render([['scene', '', 0]]);
   commitNow(); updateUndo(); refreshUI(); renderTpCard();
+  setRails(wantRails());
   driveState = tokenValid() ? 'on' : (wasConnected() ? 'reconnect' : 'off');
   updateDriveUI();
   if (driveState === 'on') syncNow();
