@@ -1815,10 +1815,14 @@ if (typeof module !== 'undefined') {
   const currentData = () => ({app:'script-editor', v:1, title:titleEl.value, titlePage:{...titlePage}, settings:{...settings}, drafts,
     blocks:blocks().map(serialBlock)});
   const hasContent = d => !!(d.title.trim() || d.blocks.some(b => b[1].trim()));
+  const SAVE_PAUSE = 1000;    // to this device: a second after you stop typing
+  const DRIVE_PAUSE = 5000;   // to Drive: five seconds after you stop
+  const DRIVE_MAX = 60000;    // and at least once a minute if you keep typing
+  let drivePendingSince = 0;
   function scheduleSave() {
     doc.dirty = true; doc.editedAt = Date.now(); changeSeq++; schedulePaginate();
     setStatus(driveState === 'on' ? 'Saving to Drive…' : 'Saving…');
-    clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, 500);
+    clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, SAVE_PAUSE);
     scheduleDrive();
   }
   // every script you work on is also kept in this device's library, so it can be opened offline
@@ -1997,7 +2001,10 @@ if (typeof module !== 'undefined') {
 
   function scheduleDrive() {
     if (driveState !== 'on') return;
-    clearTimeout(driveTimer); driveTimer = setTimeout(() => saveToDrive(), 2500);
+    const now = Date.now();
+    if (!drivePendingSince) drivePendingSince = now;
+    const wait = Math.max(0, Math.min(DRIVE_PAUSE, drivePendingSince + DRIVE_MAX - now));
+    clearTimeout(driveTimer); driveTimer = setTimeout(() => saveToDrive(), wait);
   }
   async function saveToDrive(force) {
     clearTimeout(driveTimer);
@@ -2017,7 +2024,7 @@ if (typeof module !== 'undefined') {
       }
       const meta = await upload(data);
       doc.fileId = meta.id; doc.rev = revOf(meta);
-      if (changeSeq === seq) doc.dirty = false; else saveAgain = true;
+      if (changeSeq === seq) { doc.dirty = false; drivePendingSince = 0; } else { saveAgain = true; drivePendingSince = Date.now(); }
       saveLocal();
       setStatus('Saved to Drive');
     } catch (e) { handleErr(e); }
@@ -2035,12 +2042,12 @@ if (typeof module !== 'undefined') {
       if (!m || revOf(m) === doc.rev) return;
       if (doc.dirty) { showConflict(m); return; }
       const f = await downloadFile(doc.fileId);
-      if (f) { loadDoc(f.meta, f.data, true); setStatus('Updated from Drive'); }
+      if (f) { loadDoc(f.meta, f.data, true); setStatus(`Updated from Drive: changed elsewhere ${fmtDate(f.meta.modifiedTime)}`); return true; }
     } catch (e) { handleErr(e); }
   }
   async function syncNow() {
     if (doc.dirty) await saveToDrive(true);
-    else { await checkRemote(true); if (!conflict && driveState === 'on') setStatus(doc.fileId ? 'Saved to Drive' : 'Connected to Drive'); }
+    else { const updated = await checkRemote(true); if (!updated && !conflict && driveState === 'on') setStatus(doc.fileId ? 'Saved to Drive' : 'Connected to Drive'); }
   }
   async function flushCurrent() {
     saveLocal();
@@ -2881,6 +2888,11 @@ if (typeof module !== 'undefined') {
   document.getElementById('closePicker').addEventListener('click', closePicker);
   picker.addEventListener('click', e => { if (e.target === picker) closePicker(); });
 
+  setInterval(() => {
+    if (document.visibilityState !== 'visible' || driveState !== 'on' || !navigator.onLine) return;
+    if (doc.dirty || saving || conflict || Date.now() - (doc.editedAt || 0) < 5000) return;
+    checkRemote(true);
+  }, 60000);
   window.addEventListener('online', () => { if (driveState === 'on') { (doc.dirty ? saveToDrive(true) : checkRemote(true)).then(syncPending); } });
   window.addEventListener('offline', () => setStatus('Offline: saved on this device'));
   window.addEventListener('focus', () => checkRemote());
@@ -3397,7 +3409,7 @@ if (typeof module !== 'undefined') {
       ['Writing', 'Tap where you want to write and type. Each line is one type, such as Scene or Dialogue, shown by the highlighted button.'],
       ['Changing a line’s type', 'Tap a line-type button while your cursor is in the line. On a keyboard, Tab cycles through the types and Shift+Tab goes back.'],
       ['Return', 'Starts the next line with the type that usually follows. After a Character comes Dialogue, after Dialogue comes Action, and so on. The hint at the top tells you what’s next.'],
-      ['Saving', 'There is no save button. Your work saves as you type, to this device and, once connected, to Google Drive.'],
+      ['Saving', 'There is no save button. A second after you stop typing, your work saves to this device. It goes to Google Drive five seconds after you stop, at least once a minute if you keep typing, and straight away when you switch app, lock the screen, open another script or tap New. Before each Drive save it checks nothing has changed there first.'],
       ['Undo and redo', 'Use the curved arrows, or Ctrl/Cmd+Z and Ctrl/Cmd+Y. Almost everything can be undone, including tools like Rename and Replace all.'],
     ]],
     ['Line types', [
@@ -3434,6 +3446,7 @@ if (typeof module !== 'undefined') {
     ['Google Drive', [
       ['Connecting', 'Tap Connect Drive and sign in. Scripts are kept in a Script Editor folder in your Drive. The app can only see files it made.'],
       ['Reconnect Drive', 'Google’s sign-in lasts about an hour. When it runs out, tap Reconnect Drive. Your work keeps saving on the device in the meantime.'],
+      ['Staying in step', 'While the app is open on screen and you’re not typing, it checks Drive once a minute, and whenever you come back to it. If the other device changed the script and this one has no new changes, it simply updates and tells you when the change was made.'],
       ['Changed on another device', 'If a script was edited in two places, a bar shows when each copy was last changed. Use Drive version opens the Drive copy. Keep this version saves this one to Drive. The copy you don’t pick is saved in Drafts, so nothing is lost.'],
       ['Switching accounts', 'In Files, the account is shown at the bottom. Tap Disconnect, then Connect Drive to choose another account.'],
     ]],
@@ -4071,7 +4084,7 @@ if (typeof module !== 'undefined') {
     editor.focus(); setCaret(last, txt(last).length); ensureVisible(last); refreshUI();
   });
 
-  window.addEventListener('pagehide', saveLocal);
+  window.addEventListener('pagehide', () => { saveLocal(); if (driveState === 'on' && doc.dirty) saveToDrive(true); });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { saveLocal(); if (driveState === 'on' && doc.dirty) saveToDrive(true); }
     else checkRemote();
