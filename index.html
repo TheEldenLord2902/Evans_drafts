@@ -233,13 +233,23 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 @property --ind{syntax:'<length>';inherits:true;initial-value:0px}
 @property --pw{syntax:'<length>';inherits:true;initial-value:0px}
 @property --gut{syntax:'<length>';inherits:true;initial-value:0px}
-.editor{--pw:calc(60ch + 3.5em);--gut:1.75em}
-.el{--ind:0ch}
+@property --rind{syntax:'<length>';inherits:true;initial-value:0px}
+@property --u{syntax:'<length>';inherits:true;initial-value:16px}
+@property --cs{syntax:'<length>';inherits:true;initial-value:0px}
+.editor{--pw:calc(60ch + 3.5em);--gut:1.75em;--u:1em}
+.el{--ind:0ch;--rind:0ch}
 .el[data-type="character"]{--ind:22ch}
-.el[data-type="paren"]{--ind:16ch}
-.el[data-type="dialogue"]{--ind:10ch}
-.el[data-pg]:not(.blank)::before{content:attr(data-pg);position:absolute;top:-.8em;left:calc(-1 * var(--ind) - var(--gut));width:var(--pw);border-top:1px dashed var(--faint);padding:3px 0 0 4px;font:600 11px/1 var(--ui);color:var(--muted);pointer-events:none;text-align:left;font-style:normal;text-transform:none}
-.el[data-type="dialogue"][data-pg]:not(.blank),.el[data-type="paren"][data-pg]:not(.blank){margin-top:.9em}
+.el[data-type="paren"]{--ind:16ch;--rind:19ch}
+.el[data-type="dialogue"]{--ind:10ch;--rind:15ch}
+/* page breaks: a real gap between sheets, with the new page's number at its top right */
+.el[data-pg]:not(.blank){margin-top:calc(var(--u) * 5.6) !important}
+.el[data-pg]:not(.blank)::before{content:attr(data-pg);position:absolute;pointer-events:none;
+  top:calc(var(--u) * -4.6);height:calc(var(--u) * 3.8);
+  left:calc(-1 * var(--ind) - var(--gut) + var(--cs));right:calc(-1 * var(--rind) - var(--gut));
+  display:flex;align-items:flex-end;justify-content:flex-end;box-sizing:border-box;padding:0 calc(var(--gut) * .6) 2px 0;
+  background:linear-gradient(var(--desk) 0 calc(var(--u) * 1.6), transparent calc(var(--u) * 1.6));
+  font:500 12px/1 var(--mono);color:var(--muted);text-align:right;font-style:normal;font-weight:400;text-transform:none;letter-spacing:0}
+.el[data-type="scene"][data-color]{--cs:12px}
 .el[data-type="character"].contd::after{content:" (CONT'D)";color:var(--muted)}
 .el.dual{background:rgba(168,130,58,.12);border-radius:3px}
 .el[data-alts]{box-shadow:-9px 0 0 -7px var(--brass)}
@@ -2616,7 +2626,7 @@ if (typeof module !== 'undefined') {
     const first = new Map();
     starts.forEach((bi, p) => { if (!first.has(bi)) first.set(bi, p + 2); });
     els.forEach((b, i) => {
-      if (first.has(i)) b.dataset.pg = 'Page ' + first.get(i); else delete b.dataset.pg;
+      if (first.has(i)) b.dataset.pg = first.get(i) + '.'; else delete b.dataset.pg;
       b.classList.toggle('contd', contd.has(i));
     });
     const n = hasContent(currentData()) ? pages.length : 0;
@@ -3286,9 +3296,11 @@ if (typeof module !== 'undefined') {
     } catch (e) { spell.failed = true; }    // dictionary files missing: Safari's own spell check stays on
   }
   const WORD_RE = /[A-Za-z\u00C0-\u024F]+(?:['’][A-Za-z\u00C0-\u024F]+)*/g;
+  const SCRIPT_WORDS = new Set(['int', 'ext', 'est', "cont'd", 'contd', 'pov', 'vo', 'os', 'oc', 'mos', 'sfx', 'vfx', 'cu', 'ecu', 'ms', 'ws', 'ots', 'intercut', 'insert']);
   function wordOk(w) {
     if (w.length < 2) return true;
     const k = w.replace(/’/g, "'");
+    if (SCRIPT_WORDS.has(k.toLowerCase())) return true;
     if (myWords.has(k.toLowerCase()) || ignoredNow.has(k.toLowerCase())) return true;
     if (known.names.includes(k.toUpperCase())) return true;          // character names never count as mistakes
     if (spell.cache.has(k)) return spell.cache.get(k);
