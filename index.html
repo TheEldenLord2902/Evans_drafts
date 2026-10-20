@@ -199,6 +199,9 @@ html.rails #hint{display:none}
 .chip button{border:0;background:transparent;color:var(--muted);font-size:16px;line-height:1;padding:2px 6px;border-radius:10px}
 .rail #helpBtn{margin-top:auto}
 .help details{border-bottom:1px solid var(--line)}
+.help-search{width:100%;height:44px;font:16px var(--ui);color:var(--ink);background:var(--pill);border:1px solid transparent;border-radius:10px;padding:0 12px;margin:4px 0 6px}
+.help-search:focus{outline:none;border-color:var(--brass)}
+.help h3{margin:18px 6px 4px;font:600 13px var(--ui);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .help summary{cursor:pointer;list-style:none;padding:13px 6px;font:600 16px var(--ui);display:flex;justify-content:space-between;align-items:center}
 .help summary::-webkit-details-marker{display:none}
 .help summary::after{content:"+";font-weight:400;color:var(--muted);font-size:20px}
@@ -208,6 +211,8 @@ html.rails #hint{display:none}
 .help dt{font:600 14px var(--ui);margin:10px 0 2px}
 .help dd{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
 .help p{margin:6px 0}
+.help .ex{display:block;margin-top:5px;padding:6px 10px;border-left:3px solid var(--brass);background:var(--pill);border-radius:0 6px 6px 0;font:13px/1.45 var(--mono);color:var(--ink);white-space:pre-wrap}
+.help .ex::before{content:"Example  ";font:600 11px var(--ui);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px 0}
 .page{
   position:relative;font-size:var(--fs);font-family:var(--mono);
@@ -3493,14 +3498,144 @@ if (typeof module !== 'undefined') {
       ['Editing', 'Ctrl/Cmd+Z undo, Ctrl/Cmd+Y redo, Ctrl/Cmd+F find, Ctrl/Cmd+B, I, U for style, Ctrl/Cmd+Shift+X strikethrough.'],
     ]],
   ];
+  // screenwriting terms, shown in Help under their own headings: [term, meaning, example]
+  const TERMS = [
+    ['Terms: scene headings', [
+      ['INT.', 'Interior: the scene happens indoors.', 'INT. KITCHEN - NIGHT'],
+      ['EXT.', 'Exterior: the scene happens outdoors.', 'EXT. FUEL STATION - DAY'],
+      ['INT./EXT. or I/E', 'The scene moves between inside and outside, or is seen from both.', 'INT./EXT. MICHAEL’S CAR - MOVING - DAY'],
+      ['EST.', 'Establishing: a short shot of a place, to show where we are.', 'EST. HARARE CITY CENTRE - DAWN'],
+      ['Location', 'Where the scene happens. Use the same name every time you go back there.', 'INT. KAYLA’S HOUSE - DAY'],
+      ['Sub-location', 'A part of a bigger place, after a dash.', 'INT. KAYLA’S HOUSE - BEDROOM - NIGHT'],
+      ['DAY / NIGHT', 'The time of day, written last. It tells the crew how to light the scene.', 'EXT. GARDEN - NIGHT'],
+      ['MORNING / AFTERNOON / EVENING', 'More exact times, when it matters to the story.', 'INT. KITCHEN - MORNING'],
+      ['DAWN / DUSK', 'First light and last light, when the light itself matters.', 'EXT. AFRICAN ROAD - DUSK'],
+      ['CONTINUOUS', 'The action carries straight on from the last scene, with no time gap.', 'INT. HALLWAY - CONTINUOUS'],
+      ['LATER', 'The same place, some time afterwards.', 'INT. KITCHEN - LATER'],
+      ['MOMENTS LATER', 'The same place, a very short time afterwards.', 'EXT. FRONT GATE - MOMENTS LATER'],
+      ['SAME TIME', 'Happening at the same moment as the last scene, somewhere else.', 'INT. MICHAEL’S OFFICE - SAME TIME'],
+      ['FLASHBACK', 'A scene from the past. Mark where it ends.', 'INT. SCHOOL - DAY (FLASHBACK) … then BACK TO PRESENT'],
+      ['DREAM SEQUENCE', 'A scene that is a dream. Mark where it starts and ends.', 'INT. BEDROOM - NIGHT (DREAM SEQUENCE)'],
+      ['MONTAGE', 'Short moments showing time passing, listed one by one.', 'MONTAGE - KAYLA UNPACKS: boxes opened, pictures hung, keys on the hook. END MONTAGE.'],
+      ['SERIES OF SHOTS', 'Like a montage, but in one continuous stretch of time.', 'SERIES OF SHOTS - Kayla searches every room for the noise.'],
+      ['INTERCUT', 'Cut back and forth between two places, often a phone call.', 'INTERCUT - KAYLA / MICHAEL'],
+    ]],
+    ['Terms: character extensions', [
+      ['What they are', 'Short notes in brackets after a name, saying how we hear the character.', 'KAYLA (V.O.)'],
+      ['(V.O.)', 'Voice-over: the voice isn’t in the scene, such as narration or thoughts.', 'KAYLA (V.O.) / I never wanted this house.'],
+      ['(O.S.)', 'Off-screen: in the scene, but we can’t see them.', 'MICHAEL (O.S.) / Kayla? Where are you?'],
+      ['(O.C.)', 'Off-camera: the same as O.S.; used more in TV.', 'DRIVER (O.C.) / Get in.'],
+      ['(CONT’D)', 'The same character keeps talking after a line of action. The app adds it for you.', 'KAYLA (CONT’D) / And another thing.'],
+      ['(PRE-LAP)', 'The line is heard just before its scene begins, over the end of the last one.', 'PASSENGER (PRE-LAP) / I needed to buy ice.'],
+      ['(ON PHONE) / (FILTERED)', 'The voice comes through a phone, radio or speaker.', 'MICHAEL (ON PHONE) / I’m on my way.'],
+      ['(ON TV) / (ON RADIO)', 'The voice comes from a TV or radio in the scene.', 'NEWSREADER (ON TV) / Fuel prices rose again today.'],
+      ['(SUBTITLED)', 'Spoken in another language and shown as subtitles. Write the line in English.', 'GOGO (IN SHONA; SUBTITLED) / Come and eat.'],
+      ['(SINGING)', 'The line is sung.', 'KAYLA (SINGING) / Happy birthday to you…'],
+    ]],
+    ['Terms: parentheticals', [
+      ['What they are', 'A very short direction in brackets under the name. Use them sparingly.', 'KAYLA / (quietly) / He’s here.'],
+      ['(beat)', 'A short pause or change of thought.', 'I said I’d help. (beat) I didn’t say today.'],
+      ['(pause)', 'A longer pause.', '(pause) / Fine. Go.'],
+      ['(to Michael)', 'Shows who the line is said to, when it isn’t obvious.', '(to Michael) / You heard that too?'],
+      ['(quietly), (whispering), (shouting)', 'How the line is said, when the words don’t make it clear.', '(whispering) / Don’t open the door.'],
+      ['(sotto voce)', 'Under the breath, so others nearby don’t hear.', '(sotto voce) / Not again.'],
+      ['(sarcastic), (re: the letter)', 'Tone, or what the line refers to.', '(re: the letter) / Who sent this?'],
+      ['(continuing)', 'The character carries on speaking after an interruption.', '(continuing) / As I was saying…'],
+    ]],
+    ['Terms: transitions', [
+      ['What they are', 'How one scene moves to the next, on the right. Use them rarely: a new scene heading already means a cut.', 'CUT TO:'],
+      ['FADE IN:', 'The traditional first words of a script.', 'FADE IN: / EXT. AFRICAN ROAD - DAY'],
+      ['FADE OUT.', 'The traditional last words of a script.', '… they drive away. / FADE OUT.'],
+      ['FADE TO BLACK.', 'A fade to black during the script, often at the end of an act.', 'The door slams. / FADE TO BLACK.'],
+      ['CUT TO:', 'A straight jump to the next scene, used only for emphasis.', 'She screams. / CUT TO: / INT. KITCHEN - DAY'],
+      ['SMASH CUT TO:', 'A sudden, jarring cut, often quiet to loud.', 'Silence. / SMASH CUT TO: / A KNOCK at the door.'],
+      ['MATCH CUT TO:', 'A cut between two shots that look or move alike.', 'A spinning wheel… MATCH CUT TO: / …a spinning fan.'],
+      ['JUMP CUT TO:', 'A cut that skips forward in time within the same scene.', 'Kayla starts packing. / JUMP CUT TO: / The room is empty.'],
+      ['DISSOLVE TO:', 'One scene slowly blends into the next, often showing time passing.', 'DISSOLVE TO: / EXT. HOUSE - YEARS LATER'],
+      ['CUT TO BLACK.', 'The picture suddenly goes black.', 'The lights go out. / CUT TO BLACK.'],
+      ['TIME CUT:', 'A cut that skips forward in time.', 'TIME CUT: / INT. KITCHEN - LATER'],
+      ['BACK TO:', 'Returning to a scene we cut away from.', 'BACK TO SCENE'],
+    ]],
+    ['Terms: shots and camera', [
+      ['A word of caution', 'Spec scripts should use few camera directions. Describe what we see instead.', 'Better: “Her hand shakes.” Rather than: “CLOSE ON her hand.”'],
+      ['CLOSE ON / CLOSE-UP (CU)', 'The camera is close to a face or object.', 'CLOSE ON the door handle. It turns.'],
+      ['EXTREME CLOSE-UP (ECU)', 'Very close, such as on an eye or a ring.', 'ECU - Kayla’s eye. It opens.'],
+      ['MEDIUM SHOT (MS)', 'A person from about the waist up.', 'MEDIUM SHOT - Michael at the counter.'],
+      ['WIDE SHOT (WS)', 'Shows the whole scene and where people are.', 'WIDE SHOT - the empty house at night.'],
+      ['ESTABLISHING SHOT', 'A wide shot that shows where we are.', 'ESTABLISHING SHOT - the house from the road.'],
+      ['ANGLE ON', 'Points the camera at someone or something new in the scene.', 'ANGLE ON the teddy bear on the bed.'],
+      ['POV', 'Point of view: we see what a character sees.', 'KAYLA’S POV - a hand waving from the room. / BACK TO SCENE'],
+      ['OVER THE SHOULDER (OTS)', 'Seen from just behind one character, looking at another.', 'OVER MICHAEL’S SHOULDER - Kayla stares back.'],
+      ['REVERSE ANGLE', 'The view from the opposite direction.', 'REVERSE ANGLE - what she’s looking at.'],
+      ['INSERT', 'A close shot of a detail we must read or notice.', 'INSERT - THE TEXT: “Don’t open the door.”'],
+      ['TRACKING / DOLLY', 'The camera moves along with the action.', 'TRACKING SHOT - we follow Kayla down the hall.'],
+      ['PAN / TILT', 'The camera turns side to side (pan) or up and down (tilt).', 'SLOWLY PAN TO Kayla’s face.'],
+      ['ZOOM', 'The lens moves in or out without the camera moving.', 'ZOOM IN on the locked door.'],
+      ['AERIAL', 'A shot from above, such as from a drone.', 'AERIAL - the car on the empty road.'],
+      ['HANDHELD', 'A shaky, close, documentary feel.', 'HANDHELD - we run with Kayla into the garden.'],
+      ['SLOW MOTION / FREEZE FRAME', 'Action slows down, or stops on one image.', 'SLOW MOTION - the glass falls. / FREEZE FRAME.'],
+      ['SPLIT SCREEN', 'Two or more images side by side on screen.', 'SPLIT SCREEN - Kayla and Michael on the phone.'],
+      ['SUPER or TITLE', 'Superimpose: words shown on screen.', 'SUPER: “Harare, 1998.”'],
+      ['MOS', 'Filmed without sound.', 'EXT. ROAD - DAY (MOS)'],
+      ['SFX / VFX', 'Sound effects / visual effects.', 'SFX: thunder. VFX: the door dissolves.'],
+      ['V.O. vs O.S.', 'V.O. is a voice from outside the scene; O.S. is someone in the scene we can’t see.', 'KAYLA (V.O.) narrates; MICHAEL (O.S.) shouts from upstairs.'],
+    ]],
+    ['Terms: the script itself', [
+      ['Slugline', 'Another name for a scene heading.', 'INT. KITCHEN - DAY'],
+      ['Action lines', 'What we see and hear, in the present tense and short paragraphs.', 'Kayla opens the fridge. Empty.'],
+      ['Character introductions', 'The first time someone appears, put their name in capitals, often with their age.', 'KAYLA (30s), tired but stubborn, drags in a suitcase.'],
+      ['Sounds in capitals', 'Some writers put key sounds in capitals so they stand out.', 'A loud KNOCK at the door.'],
+      ['One page, one minute', 'A formatted page runs about a minute of screen time.', 'A 100-page script is roughly a 100-minute film.'],
+      ['Eighths', 'Scenes are measured in eighths of a page for scheduling.', 'A 1 3/8 scene is a page and three eighths long.'],
+      ['(MORE) and (CONT’D)', 'Used when a speech breaks across two pages. The PDF does this for you.', '(MORE) at the bottom; KAYLA (CONT’D) at the top of the next page.'],
+      ['Dual dialogue', 'Two characters speaking at once, side by side.', 'KAYLA: “Stop!” beside MICHAEL: “Wait!”'],
+      ['Beat', 'In the story, a single moment or turn. In dialogue, a short pause.', 'Story beat: Kayla hears the whispers for the first time.'],
+      ['Act', 'A large part of the story. Films usually have three.', 'Act One ends when Kayla finds the locked room.'],
+      ['Sequence', 'A group of scenes making up one stretch of the story.', 'The night-time sequence: noises, knock, the waving arm.'],
+      ['Spec script', 'Written without being paid, to sell or show your writing. No scene numbers.', 'The draft you send to a competition.'],
+      ['Shooting script', 'The version used for filming, with scene numbers.', '12   INT. KITCHEN - DAY   12'],
+      ['Draft', 'A complete version of the script.', 'First draft, Second draft, Final draft (see Tools → Drafts).'],
+      ['Logline', 'The story in one or two sentences.', 'A couple move into a house with a room that won’t open, and something inside wants out.'],
+      ['Synopsis', 'A short summary of the whole story, a page or less.', 'Kayla and Michael move in… (and the story to the end).'],
+      ['Treatment', 'A longer summary of the story in prose.', 'A five-page telling of Whitechapel, scene by scene.'],
+      ['Outline / beat sheet', 'A list of the scenes or key moments, used to plan.', '1. They move in. 2. The door won’t open. 3. The knocking starts.'],
+      ['Coverage', 'A reader’s report on a script, with a summary and a verdict.', '“Strong premise; second act sags. Consider.”'],
+      ['Table read', 'Reading the script aloud with actors.', 'Six actors read Whitechapel round a table.'],
+      ['White space', 'Empty space on the page. Short paragraphs read faster.', 'Three short lines rather than one dense block.'],
+      ['Title page', 'The first page: title, “Written by”, your name, contact details at the bottom, no page number.', 'WHITECHAPEL / Written by / Tristan Evans'],
+    ]],
+  ];
   function showHelp() {
-    const sections = HELP.map(([title, items], k) => {
-      const d = el('details', {}, el('summary', {textContent:title}),
-        el('div', {className:'body'}, el('dl', {}, ...items.flatMap(([t, txt2]) => [el('dt', {textContent:t}), el('dd', {textContent:txt2})]))));
-      if (k === 0) d.open = true;
-      return d;
+    const build = list => list.map(([title, items]) => {
+      const pairs = items.map(([t, txt2, ex]) => {
+        const dt = el('dt', {textContent:t}), dd = el('dd', {textContent:txt2});
+        if (ex) dd.append(el('span', {className:'ex', textContent:ex}));
+        return {dt, dd, text:(t + ' ' + txt2 + ' ' + (ex || '')).toLowerCase()};
+      });
+      const d = el('details', {}, el('summary', {textContent:title}), el('div', {className:'body'}, el('dl', {}, ...pairs.flatMap(p => [p.dt, p.dd]))));
+      return {d, pairs};
     });
-    openPanel('Help', el('div', {className:'help'}, el('p', {textContent:'Tap a heading to see how that part works.'}), ...sections));
+    const app = build(HELP), terms = build(TERMS), all = [...app, ...terms];
+    app[0].d.open = true;
+    const search = el('input', {type:'search', placeholder:'Search help and terms, e.g. CONTINUOUS', autocomplete:'off', autocapitalize:'off', spellcheck:false, ariaLabel:'Search help'});
+    search.className = 'help-search';
+    const none = el('p', {textContent:'Nothing found. Try a shorter word.', hidden:true});
+    search.addEventListener('input', () => {
+      const q = search.value.trim().toLowerCase();
+      let hits = 0;
+      for (const s of all) {
+        let any = false;
+        for (const p of s.pairs) { const show = !q || p.text.includes(q); p.dt.hidden = p.dd.hidden = !show; if (show) any = true; }
+        s.d.hidden = !!q && !any; if (q) s.d.open = any; if (any) hits++;
+      }
+      if (!q) { all.forEach((s, k) => { s.d.open = k === 0; }); }
+      none.hidden = !q || hits > 0;
+    });
+    openPanel('Help', el('div', {className:'help'},
+      search, none,
+      el('h3', {textContent:'Using the app'}), ...app.map(s => s.d),
+      el('h3', {textContent:'Screenwriting terms'}),
+      el('p', {textContent:'What the words in scripts mean, and when to use them.'}), ...terms.map(s => s.d)));
   }
   document.getElementById('helpBtn').addEventListener('click', showHelp);
 
