@@ -110,6 +110,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 .el[data-type="paren"]{margin:0 19ch 0 16ch}
 .el[data-type="dialogue"]{margin:0 15ch 0 10ch}
 .el[data-type="transition"]{text-transform:uppercase;text-align:right}
+.el[data-type="shot"]{text-transform:uppercase}
+.el[data-type="note"]{font-style:italic;color:var(--muted)}
 .el.blank::before{position:absolute;left:0;right:0;top:0;color:var(--faint);pointer-events:none;font-weight:400}
 .el.blank[data-type="scene"]::before{content:"INT. LOCATION – DAY"}
 .el.blank[data-type="action"]::before{content:"Action"}
@@ -117,6 +119,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 .el.blank[data-type="paren"]::before{content:"(beat)"}
 .el.blank[data-type="dialogue"]::before{content:"Dialogue"}
 .el.blank[data-type="transition"]::before{content:"Cut to:"}
+.el.blank[data-type="shot"]::before{content:"Close on"}
+.el.blank[data-type="note"]::before{content:"Note to self"}
 </style>
 </head>
 <body>
@@ -130,7 +134,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     <button class="icon" id="redo" aria-label="Redo" title="Redo">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
     </button>
-    <button class="textbtn" id="open" hidden>Open</button>
+    <button class="textbtn" id="open">Files</button>
     <button class="textbtn" id="new">New</button>
     <button class="textbtn primary" id="drive">Connect Drive</button>
   </div>
@@ -147,6 +151,8 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       <button class="type" data-type="paren">Parenthetical</button>
       <button class="type" data-type="dialogue">Dialogue</button>
       <button class="type" data-type="transition">Transition</button>
+      <button class="type" data-type="shot">Shot</button>
+      <button class="type" data-type="note">Note</button>
     </div>
     <span id="hint"></span>
   </div>
@@ -161,18 +167,23 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
 <div class="overlay" id="picker" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
     <div class="sheet-head">
-      <h2 id="pickerTitle">Your scripts in Drive</h2>
-      <button class="textbtn" id="closePicker">Close</button>
+      <h2 id="pickerTitle">Files</h2>
+      <span class="row" style="margin:0">
+        <button class="textbtn" id="importBtn">Import</button>
+        <button class="textbtn" id="exportBtn">Download FDX</button>
+        <button class="textbtn" id="closePicker">Close</button>
+      </span>
     </div>
     <div class="list" id="pickerList"></div>
   </div>
 </div>
+<input type="file" id="importInput" accept=".json,application/json" hidden>
 
 <script>
 (() => {
-  const TYPES = ['scene','action','character','paren','dialogue','transition'];
-  const LABELS = {scene:'Scene',action:'Action',character:'Character',paren:'Parenthetical',dialogue:'Dialogue',transition:'Transition'};
-  const ENTER_NEXT = {scene:'action',action:'action',character:'dialogue',paren:'dialogue',dialogue:'action',transition:'scene'};
+  const TYPES = ['scene','action','character','paren','dialogue','transition','shot','note'];
+  const LABELS = {scene:'Scene',action:'Action',character:'Character',paren:'Parenthetical',dialogue:'Dialogue',transition:'Transition',shot:'Shot',note:'Note'};
+  const ENTER_NEXT = {scene:'action',action:'action',character:'dialogue',paren:'dialogue',dialogue:'action',transition:'scene',shot:'action',note:'action'};
   const SCENE_RE = /^(int|ext|i\/e|int\.?\s?\/\s?ext)[.\s]/i;
   const KEY = 'script-editor:draft:v1';
 
@@ -644,7 +655,6 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   function updateDriveUI() {
     driveBtn.hidden = driveState === 'on';
     driveBtn.textContent = driveState === 'reconnect' ? 'Reconnect Drive' : 'Connect Drive';
-    openBtn.hidden = driveState !== 'on';
   }
   function connect() {
     // must run straight from the tap so the Google window isn't blocked
@@ -680,6 +690,10 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
   function closePicker() { picker.hidden = true; }
   async function openPicker() {
     picker.hidden = false;
+    if (driveState !== 'on') {
+      pickerList.replaceChildren(pickerMsg('Connect Drive to see your saved scripts here. You can still import a file.'));
+      return;
+    }
     pickerList.replaceChildren(pickerMsg('Loading your scripts…'));
     try {
       const q = encodeURIComponent("appProperties has { key='scriptEditor' and value='1' } and trashed=false");
@@ -721,6 +735,87 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       pickerList.replaceChildren(pickerMsg('Couldn’t open that script. Check your connection and try again.'));
     }
   }
+  /* ---------- import ---------- */
+  const WD_MAP = {scene:'scene', action:'action', character:'character', parenthetical:'paren', dialogue:'dialogue',
+    transition:'transition', shot:'shot', note:'note', outline:'note', text:'action', general:'action'};
+  function fromWriterDuet(d) {
+    const blocks = [];
+    for (const l of d.lines) {
+      if (!l || typeof l.text !== 'string' || l.documentId === 'titlePage') continue;
+      const t = l.text.replace(/\s+/g, ' ').trim();
+      if (!t) continue;
+      blocks.push([WD_MAP[String(l.type || '').toLowerCase()] || 'action', t, 1]);
+    }
+    let title = '';
+    const tl = d.titlePage && Array.isArray(d.titlePage.lines)
+      ? d.titlePage.lines.find(l => l && l.type === 'Title' && typeof l.text === 'string' && l.text.trim()) : null;
+    if (tl) title = tl.text.trim();
+    else if (d.documentDetails && d.documentDetails['-'] && d.documentDetails['-'].title) title = d.documentDetails['-'].title;
+    return {title, blocks};
+  }
+  async function importFile(file) {
+    closePicker();
+    let d;
+    try { d = JSON.parse(await file.text()); } catch (e) { setStatus('That file isn’t a readable JSON file'); return; }
+    let s = null;
+    if (d && d.app === 'script-editor' && Array.isArray(d.blocks)) s = {title:d.title || '', blocks:d.blocks};
+    else if (d && Array.isArray(d.lines)) s = fromWriterDuet(d);
+    if (!s || !s.blocks.length) { setStatus('Couldn’t find a script in that file'); return; }
+    if (driveState === 'reconnect' && doc.dirty && hasContent(currentData())) {
+      setStatus('Reconnect Drive first so the current script is saved'); return;
+    }
+    if (driveState === 'on' && !(await flushCurrent())) {
+      setStatus('Current script isn’t in Drive yet. Try again in a moment'); return;
+    }
+    const linked = !!doc.fileId;
+    commitNow();
+    titleEl.value = s.title || file.name.replace(/\.json$/i, '');
+    render(s.blocks);
+    doc = {fileId:null, version:null, dirty:false};
+    if (linked) resetHistory(); else commitNow();
+    refreshUI(); window.scrollTo(0, 0);
+    scheduleSave();
+  }
+  /* ---------- export to Final Draft (.fdx) ---------- */
+  const FDX_TYPE = {scene:'Scene Heading', action:'Action', character:'Character', paren:'Parenthetical',
+    dialogue:'Dialogue', transition:'Transition', shot:'Shot'};
+  const CAPS = new Set(['scene', 'character', 'transition', 'shot']);
+  const xmlEsc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  function toFdx(d) {
+    const paras = [];
+    for (const [type, raw] of d.blocks) {
+      if (type === 'note') continue;            // notes stay private, they'd print as script text
+      let t = raw.trim();
+      if (!t) continue;
+      if (CAPS.has(type)) t = t.toUpperCase();
+      if (type === 'paren' && !/^\(.*\)$/.test(t)) t = '(' + t.replace(/^\(|\)$/g, '') + ')';
+      paras.push(`    <Paragraph Type="${FDX_TYPE[type] || 'Action'}">\n      <Text>${xmlEsc(t)}</Text>\n    </Paragraph>`);
+    }
+    return '<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n' +
+      '<FinalDraft DocumentType="Script" Template="No" Version="5">\n  <Content>\n' +
+      paras.join('\n') + '\n  </Content>\n</FinalDraft>\n';
+  }
+  function downloadFdx() {
+    const d = currentData();
+    if (!hasContent(d)) { setStatus('Nothing to download yet'); return; }
+    const name = (d.title.trim() || 'Untitled script').replace(/[\\/:*?"<>|]+/g, '-') + '.fdx';
+    const url = URL.createObjectURL(new Blob([toFdx(d)], {type:'application/octet-stream'}));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    closePicker();
+  }
+  document.getElementById('exportBtn').addEventListener('click', downloadFdx);
+
+  const importInput = document.getElementById('importInput');
+  document.getElementById('importBtn').addEventListener('click', () => importInput.click());
+  importInput.addEventListener('change', () => {
+    const f = importInput.files && importInput.files[0];
+    importInput.value = '';
+    if (f) importFile(f);
+  });
+
   openBtn.addEventListener('click', openPicker);
   document.getElementById('closePicker').addEventListener('click', closePicker);
   picker.addEventListener('click', e => { if (e.target === picker) closePicker(); });
@@ -775,7 +870,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     if (e.key === 'Tab') { e.preventDefault(); cycleType(e.shiftKey ? -1 : 1); return; }
     if (mod && !e.altKey && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
     if (mod && !e.altKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
-    if (e.altKey && !mod && /^Digit[1-6]$/.test(e.code)) { e.preventDefault(); applyType(TYPES[+e.code.slice(5) - 1]); }
+    if (e.altKey && !mod && /^Digit[1-8]$/.test(e.code)) { e.preventDefault(); applyType(TYPES[+e.code.slice(5) - 1]); }
   });
 
   editor.addEventListener('paste', e => {
