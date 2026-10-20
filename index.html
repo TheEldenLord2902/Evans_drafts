@@ -197,6 +197,17 @@ html.rails #hint{display:none}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 4px}
 .chip{display:inline-flex;align-items:center;gap:6px;background:var(--pill);border-radius:16px;padding:5px 6px 5px 12px;font-size:14px}
 .chip button{border:0;background:transparent;color:var(--muted);font-size:16px;line-height:1;padding:2px 6px;border-radius:10px}
+.rail #helpBtn{margin-top:auto}
+.help details{border-bottom:1px solid var(--line)}
+.help summary{cursor:pointer;list-style:none;padding:13px 6px;font:600 16px var(--ui);display:flex;justify-content:space-between;align-items:center}
+.help summary::-webkit-details-marker{display:none}
+.help summary::after{content:"+";font-weight:400;color:var(--muted);font-size:20px}
+.help details[open] summary::after{content:"–"}
+.help .body{padding:0 6px 14px}
+.help dl{margin:0}
+.help dt{font:600 14px var(--ui);margin:10px 0 2px}
+.help dd{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+.help p{margin:6px 0}
 main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px 0}
 .page{
   position:relative;font-size:var(--fs);font-family:var(--mono);
@@ -278,6 +289,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     </button>
     <button class="textbtn" id="open">Files</button>
     <button class="textbtn" id="toolsBtn">Tools</button>
+    <button class="textbtn" id="helpBtn">Help</button>
     <button class="textbtn" id="new">New</button>
     <button class="textbtn primary" id="drive">Connect Drive</button>
   </div>
@@ -293,7 +305,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     <button class="textbtn" id="findClose">Done</button>
   </div>
   <div class="row notice" id="conflict" hidden>
-    <span>This script was changed on another device.</span>
+    <span id="conflictMsg">This script was changed on another device.</span>
     <button class="textbtn" id="useDrive">Use Drive version</button>
     <button class="textbtn" id="keepMine">Keep this version</button>
   </div>
@@ -386,6 +398,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       <button class="item tool" data-tool="spell"><span>Spelling and dictionary</span><small id="spellState">On</small></button>
       <button class="item tool" data-tool="paper"><span>Paper size</span><small id="paperState">A4</small></button>
       <button class="item tool" data-tool="rails"><span>Side toolbars</span><small id="railState">Off</small></button>
+      <button class="item tool" data-tool="help"><span>Help</span><small>How every feature works</small></button>
     </div>
   </div>
 </div>
@@ -1803,7 +1816,7 @@ if (typeof module !== 'undefined') {
     blocks:blocks().map(serialBlock)});
   const hasContent = d => !!(d.title.trim() || d.blocks.some(b => b[1].trim()));
   function scheduleSave() {
-    doc.dirty = true; changeSeq++; schedulePaginate();
+    doc.dirty = true; doc.editedAt = Date.now(); changeSeq++; schedulePaginate();
     setStatus(driveState === 'on' ? 'Saving to Drive…' : 'Saving…');
     clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, 500);
     scheduleDrive();
@@ -1833,7 +1846,7 @@ if (typeof module !== 'undefined') {
       const old = doc.key; doc.key = 'drive-' + doc.fileId; LIB.del(old).catch(() => {});
     }
     if (!hasContent(d) && !doc.fileId) return;
-    const rec = {key:doc.key, fileId:doc.fileId, rev:doc.rev, dirty:doc.dirty, title:d.title, savedAt:Date.now(), data:d};
+    const rec = {key:doc.key, fileId:doc.fileId, rev:doc.rev, dirty:doc.dirty, editedAt:doc.editedAt || 0, title:d.title, savedAt:Date.now(), data:d};
     libWrite = libWrite.then(() => LIB.put(rec)).then(() => { libOk = true; }, () => { libOk = false; });
   }
   function saveLocal() {
@@ -2041,7 +2054,7 @@ if (typeof module !== 'undefined') {
     titlePage = {...TP_DEFAULT(), ...(d.titlePage || {})};
     settings = {...freshSettings(), ...(d.settings || {})}; drafts = Array.isArray(d.drafts) ? d.drafts : [];
     render(d.blocks); renderTpCard();
-    doc = {fileId:rec.fileId || null, rev:rec.rev || null, dirty:!!rec.dirty, key:rec.key};
+    doc = {fileId:rec.fileId || null, rev:rec.rev || null, dirty:!!rec.dirty, key:rec.key, editedAt:rec.editedAt || rec.savedAt || 0};
     resetHistory(); refreshUI(); saveLocal(); pageScrollTop();
     if (doc.dirty) scheduleDrive();
   }
@@ -2085,7 +2098,7 @@ if (typeof module !== 'undefined') {
     titlePage = {...TP_DEFAULT(), ...(data.titlePage || {})};
     settings = {...freshSettings(), ...(data.settings || {})}; drafts = Array.isArray(data.drafts) ? data.drafts : [];
     render(data.blocks); renderTpCard();
-    doc = {fileId:meta.id, rev:revOf(meta), dirty:false, key:'drive-' + meta.id};
+    doc = {fileId:meta.id, rev:revOf(meta), dirty:false, key:'drive-' + meta.id, editedAt:Date.parse(meta.modifiedTime) || Date.now()};
     if (keepHistory) { commitNow(); updateUndo(); } else resetHistory();
     if (document.activeElement === editor) setCaret(editor.firstElementChild, 0);
     refreshUI(); saveLocal();
@@ -2120,19 +2133,43 @@ if (typeof module !== 'undefined') {
   }
   driveBtn.addEventListener('click', connect);
 
-  function showConflict(m) { conflict = true; conflictMeta = m; conflictRow.hidden = false; setStatus('Not saved to Drive'); }
+  function showConflict(m) {
+    conflict = true; conflictMeta = m; conflictRow.hidden = false; setStatus('Not saved to Drive');
+    const driveAt = Date.parse(m.modifiedTime) || 0, hereAt = doc.editedAt || 0;
+    const when = t => t ? fmtDate(new Date(t).toISOString()) : 'unknown';
+    const newer = driveAt && hereAt ? (driveAt > hereAt ? ' (newer)' : '') : '';
+    const newerHere = driveAt && hereAt ? (hereAt > driveAt ? ' (newer)' : '') : '';
+    const line = (label, text) => el('div', {}, el('b', {textContent:label}), text);
+    document.getElementById('conflictMsg').replaceChildren(
+      el('div', {textContent:'This script was changed on another device. Which copy do you want?'}),
+      line('Drive copy: ', `saved ${when(driveAt)}${newer}`),
+      line('This device: ', `last edited ${when(hereAt)}${newerHere}`),
+      el('div', {textContent:'The one you don’t pick is kept in Drafts.', style:'color:var(--muted)'}));
+  }
   function hideConflict() { conflict = false; conflictMeta = null; conflictRow.hidden = true; }
+  // the copy you don't pick is saved as a draft, so it can always be compared or restored
+  const draftOf = (name, d) => ({name, date:new Date().toISOString(), title:d.title || '', titlePage:{...(d.titlePage || {})}, blocks:d.blocks || []});
   document.getElementById('useDrive').addEventListener('click', async () => {
     try {
+      const mine = currentData(), stamp = fmtDate(new Date(doc.editedAt || Date.now()).toISOString());
       const f = await downloadFile(doc.fileId);
       hideConflict();
-      if (f) { loadDoc(f.meta, f.data, true); setStatus('Updated from Drive'); }
-      else { doc.fileId = null; doc.rev = null; saveToDrive(true); }
+      if (f) {
+        const keep = draftOf(`This device’s version, ${stamp}`, mine);
+        loadDoc(f.meta, {...f.data, drafts:[keep, ...(Array.isArray(f.data.drafts) ? f.data.drafts : [])]}, true);
+        scheduleSave();                       // stores that draft in Drive too
+        setStatus('Using the Drive copy. This device’s version is in Drafts');
+      } else { doc.fileId = null; doc.rev = null; saveToDrive(true); }
     } catch (e) { handleErr(e); }
   });
-  document.getElementById('keepMine').addEventListener('click', () => {
-    if (conflictMeta) doc.rev = revOf(conflictMeta);
-    hideConflict(); saveToDrive(true);
+  document.getElementById('keepMine').addEventListener('click', async () => {
+    try {
+      const f = conflictMeta ? await downloadFile(doc.fileId) : null;
+      if (f) drafts = [draftOf(`Drive version, ${fmtDate(f.meta.modifiedTime)}`, f.data), ...drafts];
+      if (conflictMeta) doc.rev = revOf(conflictMeta);
+      hideConflict(); doc.dirty = true; await saveToDrive(true);
+      setStatus('Kept this version. The Drive copy it replaced is in Drafts');
+    } catch (e) { handleErr(e); }
   });
 
   const fmtDate = s => new Date(s).toLocaleString('en-GB', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
@@ -3354,6 +3391,94 @@ if (typeof module !== 'undefined') {
       chips.length ? el('div', {className:'chips'}, ...chips) : el('p', {textContent:'No words added yet.'}));
   }
 
+  /* ---------- help: how every feature works ---------- */
+  const HELP = [
+    ['Getting started', [
+      ['Writing', 'Tap where you want to write and type. Each line is one type, such as Scene or Dialogue, shown by the highlighted button.'],
+      ['Changing a line’s type', 'Tap a line-type button while your cursor is in the line. On a keyboard, Tab cycles through the types and Shift+Tab goes back.'],
+      ['Return', 'Starts the next line with the type that usually follows. After a Character comes Dialogue, after Dialogue comes Action, and so on. The hint at the top tells you what’s next.'],
+      ['Saving', 'There is no save button. Your work saves as you type, to this device and, once connected, to Google Drive.'],
+      ['Undo and redo', 'Use the curved arrows, or Ctrl/Cmd+Z and Ctrl/Cmd+Y. Almost everything can be undone, including tools like Rename and Replace all.'],
+    ]],
+    ['Line types', [
+      ['Scene', 'A scene heading, such as INT. KITCHEN - NIGHT. Typing INT. or EXT. on an Action line turns it into a Scene automatically.'],
+      ['Action', 'What we see happen.'],
+      ['Character', 'The name of who speaks. It’s shown in capitals. If the same person speaks again in a scene, (CONT’D) is added for you.'],
+      ['Parenthetical', 'A short direction inside a speech, like (quietly). The brackets are added in the PDF if you leave them out.'],
+      ['Dialogue', 'What the character says.'],
+      ['Transition', 'Such as CUT TO:, shown on the right.'],
+      ['Shot', 'A camera direction, such as CLOSE ON THE DOOR.'],
+      ['Note', 'A private note to yourself. Notes never print or go into FDX files.'],
+    ]],
+    ['Text style', [
+      ['Bold, italic, underline, strikethrough', 'Select text and tap B, I, U or S. Tap again to remove it. With nothing selected, tap a button and what you type next takes that style.'],
+      ['Shortcuts', 'Ctrl/Cmd+B, I and U, and Ctrl/Cmd+Shift+X for strikethrough. The iPad’s own text menu works too.'],
+    ]],
+    ['Autocomplete', [
+      ['Character names', 'Start typing a name you’ve used before and it’s offered. Typing ( offers (V.O.), (O.S.) and (CONT’D).'],
+      ['Scene headings', 'Offers INT. or EXT., then places you’ve used, then times like DAY and NIGHT.'],
+      ['Transitions', 'Offers common ones such as CUT TO: and FADE OUT.'],
+      ['Taking a suggestion', 'Tap it, or press Return or Tab for the highlighted one. Press Esc to dismiss.'],
+    ]],
+    ['Title page', [
+      ['Editing it', 'Tap the Title page card above page one. Fill in the title, credit, author, what it’s based on, contact details and draft.'],
+      ['Where it appears', 'On the first page of PDF, Word, FDX and Fountain files. New scripts keep your name and contact details.'],
+    ]],
+    ['Files', [
+      ['Opening a script', 'Tap Files and choose a script. The list shows your Drive scripts, and any on this device that haven’t reached Drive yet.'],
+      ['New', 'Tap New twice to start a fresh script. The current one is saved first.'],
+      ['Import', 'Brings in Final Draft (.fdx), Fountain (.fountain) and WriterDuet (.json) files.'],
+      ['Download', 'PDF for sending and printing, FDX for Final Draft, Fountain, Word, and plain text. On the iPad, the PDF opens in a new tab: use Share to save or send it.'],
+      ['Delete files', 'Lists your Drive scripts. You choose one and confirm on a second screen. Deleted scripts go to the Google Drive bin, where you can restore them for 30 days.'],
+    ]],
+    ['Google Drive', [
+      ['Connecting', 'Tap Connect Drive and sign in. Scripts are kept in a Script Editor folder in your Drive. The app can only see files it made.'],
+      ['Reconnect Drive', 'Google’s sign-in lasts about an hour. When it runs out, tap Reconnect Drive. Your work keeps saving on the device in the meantime.'],
+      ['Changed on another device', 'If a script was edited in two places, a bar shows when each copy was last changed. Use Drive version opens the Drive copy. Keep this version saves this one to Drive. The copy you don’t pick is saved in Drafts, so nothing is lost.'],
+      ['Switching accounts', 'In Files, the account is shown at the bottom. Tap Disconnect, then Connect Drive to choose another account.'],
+    ]],
+    ['Working offline', [
+      ['Getting ready', 'Open the app once while online. Every script you open is then kept on the device.'],
+      ['Without internet', 'Open the app as normal and keep writing. Files lists the scripts on this device, and New works too.'],
+      ['Back online', 'Changes go to Drive by themselves. If a script was also changed elsewhere, yours is saved as an “offline copy” rather than overwriting it.'],
+      ['Where it’s kept', 'In the browser’s private storage for this site, not as files you can see. Each device and browser has its own copy. Drive is the permanent copy.'],
+      ['iPad tip', 'Use the Home Screen app for offline work. Safari can clear saved site data after about a week without a visit, but not for Home Screen apps.'],
+    ]],
+    ['Tools', [
+      ['Find and replace', 'Type a word and tap Find; tap again for the next match. The arrows go back and forward. Replace changes the highlighted match; Replace all changes every one. Ctrl/Cmd+F opens it.'],
+      ['Scenes', 'Lists every scene with its page. Tap one to jump to it. The arrows move a whole scene up or down. Tap the dot to give a scene a colour.'],
+      ['Reports', 'Speeches and words per character, every location, and each scene’s page and length in eighths of a page.'],
+      ['Drafts', 'Save a named copy of the script as it is now. Compare shows what changed since; Restore brings it back, and can be undone.'],
+      ['Dual dialogue', 'Put the cursor in the second of two speeches in a row, then choose Dual dialogue. They print side by side. Choose it again to undo.'],
+      ['Scene numbers', 'Shows numbers in the editor and the PDF, FDX and Fountain. Leave them off for scripts you send to readers or competitions.'],
+      ['Notes', 'Lists every note in the script, with its scene. Tap one to go to it.'],
+      ['Rename a character', 'Choose a character and type the new name. It changes their speeches and, if you tick the box, every mention in action and dialogue.'],
+      ['Alternate lines', 'Keeps other versions of a line. Put the cursor in the line, then save the current version as an alternate and rewrite it. Use this swaps a version back in. Lines with alternates have a small gold mark.'],
+      ['Spelling and dictionary', 'Misspelt words get a red wavy underline. Tap one for suggestions, Add to my dictionary, or Ignore. Character names are never marked. Your dictionary works in every script.'],
+      ['Paper size', 'A4 or US Letter. Page count, page breaks, PDF and Word all follow it. Use US Letter for US contests and readers.'],
+      ['Side toolbars', 'On the iPad, puts line types on the left and everything else on the right, so more of the script shows. Turn it off for one bar at the top.'],
+    ]],
+    ['Pages and printing', [
+      ['Page breaks', 'Dashed lines in the script show where each page starts, and the page count is at the top.'],
+      ['(MORE) and (CONT’D)', 'When a speech runs onto the next page, the PDF adds (MORE) at the bottom and the name with (CONT’D) at the top.'],
+      ['Submitting', 'Send the PDF. It uses Courier 12 with standard margins and page numbers, with the title page unnumbered.'],
+    ]],
+    ['Keyboard shortcuts', [
+      ['Line types', 'Tab and Shift+Tab, or Alt/Option+1 to 8 for Scene to Note.'],
+      ['Editing', 'Ctrl/Cmd+Z undo, Ctrl/Cmd+Y redo, Ctrl/Cmd+F find, Ctrl/Cmd+B, I, U for style, Ctrl/Cmd+Shift+X strikethrough.'],
+    ]],
+  ];
+  function showHelp() {
+    const sections = HELP.map(([title, items], k) => {
+      const d = el('details', {}, el('summary', {textContent:title}),
+        el('div', {className:'body'}, el('dl', {}, ...items.flatMap(([t, txt2]) => [el('dt', {textContent:t}), el('dd', {textContent:txt2})]))));
+      if (k === 0) d.open = true;
+      return d;
+    });
+    openPanel('Help', el('div', {className:'help'}, el('p', {textContent:'Tap a heading to see how that part works.'}), ...sections));
+  }
+  document.getElementById('helpBtn').addEventListener('click', showHelp);
+
   /* ---------- notes ---------- */
   function showNotes() {
     const out = []; let scene = '';
@@ -3511,6 +3636,7 @@ if (typeof module !== 'undefined') {
     else if (t === 'numbers') toggleNumbers();
     else if (t === 'rails') toggleRails();
     else if (t === 'notes') showNotes();
+    else if (t === 'help') showHelp();
     else if (t === 'rename') showRename();
     else if (t === 'alts') showAlts();
     else if (t === 'spell') showSpell();
@@ -3741,7 +3867,8 @@ if (typeof module !== 'undefined') {
   document.documentElement.classList.toggle('shell', isIOSDevice);
   const pair = el('div', {className:'pair'});
   const label = t => el('div', {className:'rail-label', textContent:t});
-  const movable = [titleEl, document.getElementById('pages'), statusEl, undoBtn, redoBtn, document.querySelector('.fmt'),
+  const helpBtn = document.getElementById('helpBtn');
+  const movable = [helpBtn, titleEl, document.getElementById('pages'), statusEl, undoBtn, redoBtn, document.querySelector('.fmt'),
     document.querySelector('.types'), openBtn, document.getElementById('toolsBtn'), newBtn, driveBtn];
   const homes = new Map(movable.map(n => { const ph = document.createComment(''); n.before(ph); return [n, ph]; }));
   let railsOn = false;
@@ -3766,7 +3893,7 @@ if (typeof module !== 'undefined') {
       // left: line types right at the top. right: script details, then files, new, tools, undo/redo, style
       railL.replaceChildren(document.querySelector('.types'));
       railR.replaceChildren(titleEl, document.getElementById('pages'), statusEl, driveBtn,
-        openBtn, newBtn, document.getElementById('toolsBtn'), pair, label('Style'), document.querySelector('.fmt'));
+        openBtn, newBtn, document.getElementById('toolsBtn'), pair, label('Style'), document.querySelector('.fmt'), helpBtn);
     } else {
       movable.forEach(n => homes.get(n).after(n));
       railL.replaceChildren(); railR.replaceChildren();
@@ -3985,7 +4112,7 @@ if (typeof module !== 'undefined') {
     titlePage = {...TP_DEFAULT(), ...(saved.titlePage || {})};
     settings = {...freshSettings(), ...(saved.settings || {})}; drafts = Array.isArray(saved.drafts) ? saved.drafts : [];
     const d = saved.doc || {};
-    doc = {fileId:d.fileId || null, rev:d.rev || null, dirty:saved.doc ? (!!d.dirty || !d.rev) : true, key:d.key || (d.fileId ? 'drive-' + d.fileId : newKey())};
+    doc = {fileId:d.fileId || null, rev:d.rev || null, dirty:saved.doc ? (!!d.dirty || !d.rev) : true, key:d.key || (d.fileId ? 'drive-' + d.fileId : newKey()), editedAt:d.editedAt || saved.savedAt || 0};
   } else render([['scene', '', 0]]);
   commitNow(); updateUndo(); refreshUI(); renderTpCard();
   setRails(wantRails()); pin();
