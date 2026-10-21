@@ -323,6 +323,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     <span id="conflictMsg">This script was changed on another device.</span>
     <button class="textbtn" id="useDrive">Use Drive version</button>
     <button class="textbtn" id="keepMine">Keep this version</button>
+    <button class="textbtn primary" id="keepBoth">Keep both</button>
   </div>
   <div class="row" id="rowTypes">
     <div class="fmt" role="toolbar" aria-label="Text style">
@@ -372,6 +373,7 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
       <button class="textbtn" id="fountainBtn">Download Fountain</button>
       <button class="textbtn" id="docxBtn">Download Word</button>
       <button class="textbtn" id="txtBtn">Download text</button>
+      <button class="textbtn" id="renameBtn">Rename files</button>
       <button class="textbtn danger" id="deleteBtn">Delete files</button>
     </div>
     <div class="list" id="pickerList"></div>
@@ -1836,6 +1838,7 @@ if (typeof module !== 'undefined') {
   let drivePendingSince = 0;
   function scheduleSave() {
     doc.dirty = true; doc.editedAt = Date.now(); changeSeq++; schedulePaginate();
+    if (!navigator.onLine) doc.offline = true;   // made offline: you'll be asked before it goes to Drive
     setStatus(driveState === 'on' ? 'Saving to Drive…' : 'Saving…');
     clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, SAVE_PAUSE);
     scheduleDrive();
@@ -1865,7 +1868,7 @@ if (typeof module !== 'undefined') {
       const old = doc.key; doc.key = 'drive-' + doc.fileId; LIB.del(old).catch(() => {});
     }
     if (!hasContent(d) && !doc.fileId) return;
-    const rec = {key:doc.key, fileId:doc.fileId, rev:doc.rev, dirty:doc.dirty, editedAt:doc.editedAt || 0, title:d.title, savedAt:Date.now(), data:d};
+    const rec = {key:doc.key, fileId:doc.fileId, rev:doc.rev, dirty:doc.dirty, offline:!!doc.offline, editedAt:doc.editedAt || 0, title:d.title, savedAt:Date.now(), data:d};
     libWrite = libWrite.then(() => LIB.put(rec)).then(() => { libOk = true; }, () => { libOk = false; });
   }
   function saveLocal() {
@@ -2035,7 +2038,7 @@ if (typeof module !== 'undefined') {
       if (doc.fileId) {
         const m = await getMeta(doc.fileId);
         if (!m) { doc.fileId = null; doc.rev = null; }
-        else if (doc.rev && revOf(m) !== doc.rev) { showConflict(m); return; }
+        else if (!doc.rev || revOf(m) !== doc.rev || doc.offline) { showConflict(m); return; }
       }
       const meta = await upload(data);
       doc.fileId = meta.id; doc.rev = revOf(meta);
@@ -2076,9 +2079,9 @@ if (typeof module !== 'undefined') {
     titlePage = {...TP_DEFAULT(), ...(d.titlePage || {})};
     settings = {...freshSettings(), ...(d.settings || {})}; drafts = Array.isArray(d.drafts) ? d.drafts : [];
     render(d.blocks); renderTpCard();
-    doc = {fileId:rec.fileId || null, rev:rec.rev || null, dirty:!!rec.dirty, key:rec.key, editedAt:rec.editedAt || rec.savedAt || 0};
+    doc = {fileId:rec.fileId || null, rev:rec.rev || null, dirty:!!rec.dirty, offline:!!rec.offline, key:rec.key, editedAt:rec.editedAt || rec.savedAt || 0};
     resetHistory(); refreshUI(); saveLocal(); pageScrollTop();
-    if (doc.dirty) scheduleDrive();
+    if (doc.dirty && driveState === 'on' && navigator.onLine) saveToDrive(true);   // asks first if Drive's copy differs
   }
   async function openLocal(key) {
     if (key === doc.key) { closePicker(); return; }
@@ -2099,6 +2102,7 @@ if (typeof module !== 'undefined') {
     try {
       for (const rec of await LIB.all()) {
         if (!rec.dirty || rec.key === doc.key || !hasContent(rec.data)) continue;
+        if (rec.fileId && rec.offline) continue;          // you'll be asked when you open it
         let d = rec.data, fileId = rec.fileId;
         if (fileId) {
           const m = await getMeta(fileId);
@@ -2131,7 +2135,10 @@ if (typeof module !== 'undefined') {
       setStatus('Saved on this device. Reconnect to save to Drive');
       return;
     }
-    if (e instanceof TypeError || !navigator.onLine) { setStatus('Offline: saved on this device'); return; }
+    if (e instanceof TypeError || !navigator.onLine) {
+      if (doc.dirty) doc.offline = true;    // the internet dropped even if the device thinks it's online
+      setStatus('Offline: saved on this device'); return;
+    }
     console.error(e);
     setStatus('Drive save failed. Retrying soon');
     setTimeout(() => { if (doc.dirty) saveToDrive(true); }, 15000);
@@ -2163,10 +2170,12 @@ if (typeof module !== 'undefined') {
     const newerHere = driveAt && hereAt ? (hereAt > driveAt ? ' (newer)' : '') : '';
     const line = (label, text) => el('div', {}, el('b', {textContent:label}), text);
     document.getElementById('conflictMsg').replaceChildren(
-      el('div', {textContent:'This script was changed on another device. Which copy do you want?'}),
+      el('div', {textContent:(!doc.rev || revOf(m) !== doc.rev)
+        ? 'This script was changed on another device. Which copy do you want?'
+        : 'You changed this script while offline. Which copy do you want?'}),
       line('Drive copy: ', `saved ${when(driveAt)}${newer}`),
       line('This device: ', `last edited ${when(hereAt)}${newerHere}`),
-      el('div', {textContent:'The one you don’t pick is kept in Drafts.', style:'color:var(--muted)'}));
+      el('div', {textContent:'Keep both saves this device’s copy as a separate script and opens the Drive copy, so you can compare them. Otherwise, the one you don’t pick is kept in Drafts.', style:'color:var(--muted)'}));
   }
   function hideConflict() { conflict = false; conflictMeta = null; conflictRow.hidden = true; }
   // the copy you don't pick is saved as a draft, so it can always be compared or restored
@@ -2184,11 +2193,29 @@ if (typeof module !== 'undefined') {
       } else { doc.fileId = null; doc.rev = null; saveToDrive(true); }
     } catch (e) { handleErr(e); }
   });
+  // save this device's copy as its own script in Drive, then open the Drive copy
+  document.getElementById('keepBoth').addEventListener('click', async () => {
+    const btn = document.getElementById('keepBoth');
+    btn.disabled = true;
+    try {
+      const mine = currentData(), stamp = fmtDate(new Date(doc.editedAt || Date.now()).toISOString());
+      const copyTitle = `${(mine.title || '').trim() || 'Untitled script'} (this device, ${stamp})`;
+      const copy = {...mine, title:copyTitle};
+      const meta = await upload(copy, null);
+      await LIB.put({key:'drive-' + meta.id, fileId:meta.id, rev:revOf(meta), dirty:false, offline:false, editedAt:doc.editedAt || Date.now(), title:copyTitle, savedAt:Date.now(), data:copy}).catch(() => {});
+      const f = await downloadFile(doc.fileId);
+      hideConflict();
+      if (f) loadDoc(f.meta, f.data, false);
+      setStatus(`Kept both. This device’s copy is saved as “${copyTitle}”. Open it from Files`);
+    } catch (e) { handleErr(e); }
+    finally { btn.disabled = false; }
+  });
   document.getElementById('keepMine').addEventListener('click', async () => {
     try {
       const f = conflictMeta ? await downloadFile(doc.fileId) : null;
       if (f) drafts = [draftOf(`Drive version, ${fmtDate(f.meta.modifiedTime)}`, f.data), ...drafts];
       if (conflictMeta) doc.rev = revOf(conflictMeta);
+      doc.offline = false;
       hideConflict(); doc.dirty = true; await saveToDrive(true);
       setStatus('Kept this version. The Drive copy it replaced is in Drafts');
     } catch (e) { handleErr(e); }
@@ -2273,7 +2300,7 @@ if (typeof module !== 'undefined') {
       if (!files.length && !onlyHere.length) { pickerList.replaceChildren(pickerMsg('No scripts in Drive yet. Anything you write is saved there automatically.')); return; }
       pickerList.replaceChildren(...(onlyHere.length ? [pickerMsg('On this device, not in Drive yet:'), ...onlyHere.map(r => localRow(r)), pickerMsg('In Drive:')] : []), ...files.map(f => {
         const lr = byFile.get(f.id);
-        if (lr && lr.dirty && lr.key !== doc.key) return localRow(lr, 'Changes not in Drive yet');   // open the newer copy on this device
+        if (lr && lr.dirty && lr.key !== doc.key) return localRow(lr, lr.offline ? 'Changed offline: open to choose which copy' : 'Changes not in Drive yet');   // open the newer copy on this device
         const b = document.createElement('button');
         b.className = 'item' + (f.id === doc.fileId ? ' current' : '');
         const n = document.createElement('span'); n.textContent = f.name.replace(/\.script\.json$/, '');
@@ -2899,6 +2926,91 @@ if (typeof module !== 'undefined') {
   }
   document.getElementById('deleteBtn').addEventListener('click', showDelete);
 
+  /* ---------- renaming scripts ---------- */
+  async function showRenameFiles() {
+    closePicker();
+    openPanel('Rename files', el('p', {textContent:'Loading your scripts…'}));
+    saveLocal(); await libWrite;
+    const local = (await LIB.all().catch(() => [])).sort((a, b) => b.savedAt - a.savedAt);
+    let files = [];
+    if (driveState === 'on' && navigator.onLine) {
+      try {
+        const q = encodeURIComponent("appProperties has { key='scriptEditor' and value='1' } and trashed=false");
+        const r = await api(`${API}/files?q=${q}&orderBy=${encodeURIComponent('modifiedTime desc')}&pageSize=100&fields=files(id,name,modifiedTime)`);
+        if (r.ok) files = (await r.json()).files || [];
+      } catch (e) { handleErr(e); }
+    }
+    const rows = [];
+    const row = (name, note, onRename) => {
+      const btn = el('button', {className:'textbtn', textContent:'Rename…'});
+      btn.addEventListener('click', onRename);
+      return el('div', {className:'del-row'}, el('div', {className:'meta'}, el('b', {textContent:name}), el('small', {textContent:note})), btn);
+    };
+    for (const f of files) {
+      const name = f.name.replace(/\.script\.json$/, '');
+      rows.push(row(name, (f.id === doc.fileId ? 'Open now · ' : '') + fmtDate(f.modifiedTime), () => renameForm2({fileId:f.id, name})));
+    }
+    for (const rec of local) {
+      if (rec.fileId && files.some(f => f.id === rec.fileId)) continue;
+      if (rec.fileId && !files.length && driveState === 'on' && navigator.onLine) continue;
+      const name = (rec.title || '').trim() || 'Untitled script';
+      rows.push(row(name, (rec.key === doc.key ? 'Open now · ' : '') + 'On this device', () => renameForm2({key:rec.key, name})));
+    }
+    openPanel('Rename files',
+      el('p', {textContent:rows.length ? 'Choose a script to rename. The new name is used for the title page and the file in Drive.' : 'There are no scripts to rename yet.'}),
+      ...rows);
+  }
+  function renameForm2(t) {
+    const input = el('input', {type:'text', value:t.name, autocomplete:'off', ariaLabel:'New name'});
+    input.style.cssText = 'width:100%;height:44px;font:16px var(--ui);color:var(--ink);background:var(--pill);border:1px solid transparent;border-radius:10px;padding:0 12px';
+    const save = el('button', {className:'textbtn primary', textContent:'Rename'});
+    const back = el('button', {className:'textbtn', textContent:'Back'});
+    back.addEventListener('click', showRenameFiles);
+    const go = async () => {
+      const nn = input.value.trim();
+      if (!nn || nn === t.name) { input.focus(); return; }
+      save.disabled = true; save.textContent = 'Renaming…';
+      try {
+        await renameScript(t, nn);
+        setStatus(`Renamed to “${nn}”`);
+        showRenameFiles();
+      } catch (e) {
+        handleErr(e);
+        save.disabled = false; save.textContent = 'Rename';
+        setStatus(e && e.msg ? e.msg : 'Couldn’t rename that script. Check your connection and try again');
+      }
+    };
+    save.addEventListener('click', go);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+    openPanel('Rename “' + t.name + '”', input, el('div', {className:'confirm-actions'}, back, save));
+    input.focus(); input.select();
+  }
+  async function renameScript(t, nn) {
+    // the script that's open: change its title, and it saves as usual
+    if ((t.fileId && t.fileId === doc.fileId) || (t.key && t.key === doc.key)) {
+      titleEl.value = nn; renderTpCard(); scheduleSave();
+      if (driveState === 'on' && navigator.onLine) await saveToDrive(true);
+      return;
+    }
+    // a script only on this device
+    if (t.key) {
+      const rec = await LIB.get(t.key);
+      if (!rec) throw {msg:'That script isn’t on this device any more'};
+      rec.data = {...rec.data, title:nn}; rec.title = nn; rec.dirty = true; rec.editedAt = Date.now(); rec.savedAt = Date.now();
+      await LIB.put(rec);
+      return;
+    }
+    // a script in Drive: rename inside the file too, so its title page matches
+    const lr = await LIB.get('drive-' + t.fileId).catch(() => null);
+    if (lr && lr.dirty) throw {msg:'That script has changes on this device that aren’t in Drive yet. Open it first, then rename it'};
+    const f = await downloadFile(t.fileId);
+    if (!f) throw {msg:'That script is no longer in Drive'};
+    const data = {...f.data, title:nn};
+    const meta = await upload(data, t.fileId);
+    await LIB.put({key:'drive-' + meta.id, fileId:meta.id, rev:revOf(meta), dirty:false, offline:false, editedAt:Date.now(), title:nn, savedAt:Date.now(), data}).catch(() => {});
+  }
+  document.getElementById('renameBtn').addEventListener('click', showRenameFiles);
+
   openBtn.addEventListener('click', openPicker);
   document.getElementById('closePicker').addEventListener('click', closePicker);
   picker.addEventListener('click', e => { if (e.target === picker) closePicker(); });
@@ -3462,19 +3574,20 @@ if (typeof module !== 'undefined') {
       ['New', 'Tap New twice to start a fresh script. The current one is saved first.'],
       ['Import', 'Brings in Final Draft (.fdx), Fountain (.fountain) and WriterDuet (.json) files.'],
       ['Download', 'PDF for sending and printing, FDX for Final Draft, Fountain, Word, and plain text. On the iPad, the PDF opens in a new tab: use Share to save or send it.'],
+      ['Rename files', 'Lists your scripts. Choose one and type a new name. The title page and the file in Drive both change. You can also rename the open script by editing its title at the top.'],
       ['Delete files', 'Lists your Drive scripts. You choose one and confirm on a second screen. Deleted scripts go to the Google Drive bin, where you can restore them for 30 days.'],
     ]],
     ['Google Drive', [
       ['Connecting', 'Tap Connect Drive and sign in. Scripts are kept in a Script Editor folder in your Drive. The app can only see files it made.'],
       ['Reconnect Drive', 'Google’s sign-in lasts about an hour. When it runs out, tap Reconnect Drive. Your work keeps saving on the device in the meantime.'],
       ['Staying in step', 'While the app is open on screen and you’re not typing, it checks Drive once a minute, and whenever you come back to it. If the other device changed the script and this one has no new changes, it simply updates and tells you when the change was made.'],
-      ['Changed on another device', 'If a script was edited in two places, a bar shows when each copy was last changed. Use Drive version opens the Drive copy. Keep this version saves this one to Drive. The copy you don’t pick is saved in Drafts, so nothing is lost.'],
+      ['Changed on another device or offline', 'If this device’s copy and the Drive copy differ, because the script was edited elsewhere or you changed it while offline, a bar shows when each copy was last changed and lets you choose. Use Drive version opens the Drive copy. Keep this version saves this one to Drive. Keep both saves this device’s copy as a separate script, named with “(this device, …)” and the time, then opens the Drive copy, so you can compare them and delete the one you don’t want. With the first two, the copy you don’t pick is saved in Drafts, so nothing is lost.'],
       ['Switching accounts', 'In Files, the account is shown at the bottom. Tap Disconnect, then Connect Drive to choose another account.'],
     ]],
     ['Working offline', [
       ['Getting ready', 'Open the app once while online. Every script you open is then kept on the device.'],
       ['Without internet', 'Open the app as normal and keep writing. Files lists the scripts on this device, and New works too.'],
-      ['Back online', 'Changes go to Drive by themselves. If a script was also changed elsewhere, yours is saved as an “offline copy” rather than overwriting it.'],
+      ['Back online', 'Before anything you changed offline goes to Drive, you’re asked which copy to keep, with the date and time of each. Brand-new scripts written offline simply upload. Other scripts you changed offline wait until you open them.'],
       ['Where it’s kept', 'In the browser’s private storage for this site, not as files you can see. Each device and browser has its own copy. Drive is the permanent copy.'],
       ['iPad tip', 'Use the Home Screen app for offline work. Safari can clear saved site data after about a week without a visit, but not for Home Screen apps.'],
     ]],
@@ -4276,7 +4389,7 @@ if (typeof module !== 'undefined') {
     titlePage = {...TP_DEFAULT(), ...(saved.titlePage || {})};
     settings = {...freshSettings(), ...(saved.settings || {})}; drafts = Array.isArray(saved.drafts) ? saved.drafts : [];
     const d = saved.doc || {};
-    doc = {fileId:d.fileId || null, rev:d.rev || null, dirty:saved.doc ? (!!d.dirty || !d.rev) : true, key:d.key || (d.fileId ? 'drive-' + d.fileId : newKey()), editedAt:d.editedAt || saved.savedAt || 0};
+    doc = {fileId:d.fileId || null, rev:d.rev || null, dirty:saved.doc ? (!!d.dirty || !d.rev) : true, key:d.key || (d.fileId ? 'drive-' + d.fileId : newKey()), editedAt:d.editedAt || saved.savedAt || 0, offline:!!d.offline};
   } else render([['scene', '', 0]]);
   commitNow(); updateUndo(); refreshUI(); renderTpCard();
   setRails(wantRails()); pin();
