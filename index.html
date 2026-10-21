@@ -319,6 +319,10 @@ main{padding:calc(var(--hdr, 110px) - env(safe-area-inset-top, 0px) + 22px) 10px
     <button class="textbtn" id="replAll">Replace all</button>
     <button class="textbtn" id="findClose">Done</button>
   </div>
+  <div class="row notice" id="updateRow" hidden>
+    <span>A newer version of the app is available. Your work is saved; updating only takes a second.</span>
+    <button class="textbtn primary" id="updateNow">Update now</button>
+  </div>
   <div class="row notice" id="conflict" hidden>
     <span id="conflictMsg">This script was changed on another device.</span>
     <button class="textbtn" id="useDrive">Use Drive version</button>
@@ -1420,6 +1424,7 @@ if (typeof module !== 'undefined') {
   const typeBtns = [...document.querySelectorAll('.type')];
   const fmtBtns = [...document.querySelectorAll('.fmt button')];
 
+  const APP_VERSION = '2026.10.21-1';   // change with every update
   /* ---------- scrolling: the window, or the script area when side toolbars are on ---------- */
   const mainEl = document.querySelector('main');
   const scroller = () => document.documentElement.classList.contains('shell') ? mainEl : window;
@@ -1838,7 +1843,8 @@ if (typeof module !== 'undefined') {
   let drivePendingSince = 0;
   function scheduleSave() {
     doc.dirty = true; doc.editedAt = Date.now(); changeSeq++; schedulePaginate();
-    if (!navigator.onLine) doc.offline = true;   // made offline: you'll be asked before it goes to Drive
+    // made offline or while not connected to Drive: you'll be asked before it goes up
+    if (!navigator.onLine || driveState !== 'on') doc.offline = true;
     setStatus(driveState === 'on' ? 'Saving to Drive…' : 'Saving…');
     clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, SAVE_PAUSE);
     scheduleDrive();
@@ -2172,7 +2178,7 @@ if (typeof module !== 'undefined') {
     document.getElementById('conflictMsg').replaceChildren(
       el('div', {textContent:(!doc.rev || revOf(m) !== doc.rev)
         ? 'This script was changed on another device. Which copy do you want?'
-        : 'You changed this script while offline. Which copy do you want?'}),
+        : 'You changed this script while offline or not connected to Drive. Which copy do you want?'}),
       line('Drive copy: ', `saved ${when(driveAt)}${newer}`),
       line('This device: ', `last edited ${when(hereAt)}${newerHere}`),
       el('div', {textContent:'Keep both saves this device’s copy as a separate script and opens the Drive copy, so you can compare them. Otherwise, the one you don’t pick is kept in Drafts.', style:'color:var(--muted)'}));
@@ -3580,8 +3586,9 @@ if (typeof module !== 'undefined') {
     ['Google Drive', [
       ['Connecting', 'Tap Connect Drive and sign in. Scripts are kept in a Script Editor folder in your Drive. The app can only see files it made.'],
       ['Reconnect Drive', 'Google’s sign-in lasts about an hour. When it runs out, tap Reconnect Drive. Your work keeps saving on the device in the meantime.'],
+      ['Same version everywhere', 'Help shows the app version. When you upload a new version to GitHub, each device shows an Update now bar the next time it checks, so the computer and iPad always run the same app.'],
       ['Staying in step', 'While the app is open on screen and you’re not typing, it checks Drive once a minute, and whenever you come back to it. If the other device changed the script and this one has no new changes, it simply updates and tells you when the change was made.'],
-      ['Changed on another device or offline', 'If this device’s copy and the Drive copy differ, because the script was edited elsewhere or you changed it while offline, a bar shows when each copy was last changed and lets you choose. Use Drive version opens the Drive copy. Keep this version saves this one to Drive. Keep both saves this device’s copy as a separate script, named with “(this device, …)” and the time, then opens the Drive copy, so you can compare them and delete the one you don’t want. With the first two, the copy you don’t pick is saved in Drafts, so nothing is lost.'],
+      ['Changed on another device or offline', 'If this device’s copy and the Drive copy differ, because the script was edited elsewhere or you changed it while offline or not connected to Drive, a bar shows when each copy was last changed and lets you choose. Use Drive version opens the Drive copy. Keep this version saves this one to Drive. Keep both saves this device’s copy as a separate script, named with “(this device, …)” and the time, then opens the Drive copy, so you can compare them and delete the one you don’t want. With the first two, the copy you don’t pick is saved in Drafts, so nothing is lost.'],
       ['Switching accounts', 'In Files, the account is shown at the bottom. Tap Disconnect, then Connect Drive to choose another account.'],
     ]],
     ['Working offline', [
@@ -3749,7 +3756,7 @@ if (typeof module !== 'undefined') {
       none.hidden = !q || hits > 0;
     });
     openPanel('Help', el('div', {className:'help'},
-      search, none,
+      el('p', {textContent:`App version ${APP_VERSION}. Both your devices should show the same number.`}), search, none,
       el('h3', {textContent:'Using the app'}), ...app.map(s => s.d),
       el('h3', {textContent:'Screenwriting terms'}),
       el('p', {textContent:'What the words in scripts mean, and when to use them.'}), ...terms.map(s => s.d)));
@@ -4182,7 +4189,7 @@ if (typeof module !== 'undefined') {
     document.getElementById('railState').textContent = on ? 'On' : 'Off';
   }
   // with side bars the top bar only appears for find and replace, or a save warning
-  function syncHeader() { hdr.hidden = railsOn && findBar.hidden && conflictRow.hidden; measure(); }
+  function syncHeader() { hdr.hidden = railsOn && findBar.hidden && conflictRow.hidden && document.getElementById('updateRow').hidden; measure(); }
   new MutationObserver(syncHeader).observe(findBar, {attributes:true, attributeFilter:['hidden']});
   new MutationObserver(syncHeader).observe(conflictRow, {attributes:true, attributeFilter:['hidden']});
   window.addEventListener('resize', () => setRails(wantRails()));
@@ -4193,6 +4200,31 @@ if (typeof module !== 'undefined') {
     setRails(wantRails());
     toolsSheet.hidden = true;
   }
+
+  /* ---------- updates: make sure every device runs the latest version ---------- */
+  const updateRow = document.getElementById('updateRow');
+  let lastUpdateCheck = 0;
+  async function checkForUpdate(force) {
+    if (!navigator.onLine || location.protocol === 'file:') return;
+    if (!force && Date.now() - lastUpdateCheck < 5 * 60000) return;
+    lastUpdateCheck = Date.now();
+    try {
+      const r = await fetch('index.html?v=' + Date.now(), {cache:'no-store'});
+      if (!r.ok) return;
+      const m = (await r.text()).match(/const APP_VERSION = '([^']+)'/);
+      if (m && m[1] !== APP_VERSION) updateRow.hidden = false;
+    } catch (e) {}
+  }
+  document.getElementById('updateNow').addEventListener('click', async () => {
+    saveLocal(); await libWrite;
+    if (driveState === 'on' && doc.dirty && !conflict) { try { await saveToDrive(true); } catch (e) {} }
+    try { const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch (e) {}
+    location.reload();
+  });
+  setTimeout(() => checkForUpdate(true), 4000);
+  setInterval(() => { if (document.visibilityState === 'visible') checkForUpdate(); }, 10 * 60000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
+  if (window.MutationObserver) new MutationObserver(() => { try { syncHeader(); } catch (e) {} }).observe(updateRow, {attributes:true, attributeFilter:['hidden']});
 
   /* ---------- events ---------- */
   editor.addEventListener('beforeinput', e => {

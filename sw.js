@@ -1,6 +1,6 @@
 // Script Editor offline support: keeps a copy of the app on the device so it opens without internet.
 // Google sign-in and Drive always go straight to the network and are never stored here.
-const CACHE = 'script-editor-v1';
+const CACHE = 'script-editor-v2';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png', 'en_GB.aff', 'en_GB.dic'];
 
 self.addEventListener('install', e => {
@@ -24,7 +24,7 @@ self.addEventListener('fetch', e => {
   const page = new URL('index.html', self.registration.scope).href;
   // the app itself: always try for the newest version, fall back to the saved copy when offline
   if (same && (req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('index.html'))) {
-    e.respondWith(fetch(req).then(r => {
+    e.respondWith(fetch(req, {cache:'no-store'}).then(r => {
       if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(page, copy)); }
       return r;
     }).catch(() => caches.match(page)));
