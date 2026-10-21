@@ -3321,13 +3321,17 @@ if (typeof module !== 'undefined') {
     const ci = caretInfo(), ranges = [], misses = [];
     for (const b of blocks()) {
       const t = txt(b);
+      // scene headings, character names, transitions and shots are shown (and printed) in capitals,
+      // so check them as you see them, not as they were typed (e.g. "nIGHT" with Caps Lock on)
+      const caps = CAPS.has(b.dataset.type);
       for (const m of t.matchAll(WORD_RE)) {
         const s0 = m.index, e0 = s0 + m[0].length;
         if (ci && ci.collapsed && ci.block === b && ci.off >= s0 && ci.off <= e0) continue;   // still typing this word
-        if (wordOk(m[0])) continue;
+        const word = caps ? m[0].toUpperCase() : m[0];
+        if (wordOk(word)) continue;
         const r = document.createRange();
         r.setStart(...nodeAt(b, s0)); r.setEnd(...nodeAt(b, e0));
-        ranges.push(r); misses.push({b, s:s0, e:e0, w:m[0]});
+        ranges.push(r); misses.push({b, s:s0, e:e0, w:word, caps});
       }
     }
     spell.misses = misses;
@@ -3340,7 +3344,7 @@ if (typeof module !== 'undefined') {
   editor.addEventListener('click', () => setTimeout(() => {
     const ci = caretInfo();
     if (!ci || !ci.collapsed || !spell.ready) return hideSpellPop();
-    const m = spell.misses.find(x => x.b === ci.block && ci.off >= x.s && ci.off <= x.e && txt(x.b).slice(x.s, x.e) === x.w);
+    const m = spell.misses.find(x => { const t2 = txt(x.b).slice(x.s, x.e); return x.b === ci.block && ci.off >= x.s && ci.off <= x.e && (x.caps ? t2.toUpperCase() : t2) === x.w; });
     if (!m) return hideSpellPop();
     showSpellPop(m);
   }, 0));
